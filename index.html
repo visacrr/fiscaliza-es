@@ -5,31 +5,35 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VISA Careiro — Cadastro Sanitário</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 <style>
 :root {
-  --rosa: #f9b8c8;
-  --rosa-dark: #f48aab;
-  --rosa-soft: #fde8ee;
-  --amarelo: #fde68a;
-  --amarelo-dark: #f6c341;
-  --amarelo-soft: #fffbeb;
-  --bg: #fff8f9;
-  --surface: #ffffff;
-  --surface2: #fdf4f6;
-  --text: #2d1b24;
+  --rosa:       #f9b8c8;
+  --rosa-dark:  #f48aab;
+  --rosa-soft:  #fde8ee;
+  --amarelo:    #fde68a;
+  --amarelo-dark:#f6c341;
+  --amarelo-soft:#fffbeb;
+  --bg:         #f5e8ef;
+  --surface:    rgba(255,255,255,0.72);
+  --surface2:   rgba(253,244,246,0.8);
+  --text:       #2d1b24;
   --text-light: #7a4f61;
   --text-muted: #b08090;
-  --border: #f5c6d4;
-  --success: #6bcb8b;
+  --border:     rgba(244,138,171,0.25);
+  --border-solid:#f5c6d4;
+  --success:    #6bcb8b;
   --success-bg: #e8f8ee;
-  --warning: #f6a623;
+  --warning:    #f6a623;
   --warning-bg: #fff4e0;
-  --danger: #e05a6b;
-  --danger-bg: #fdeef0;
-  --shadow: 0 4px 24px rgba(244,138,171,0.12);
-  --shadow-hover: 0 8px 32px rgba(244,138,171,0.22);
-  --radius: 16px;
-  --radius-sm: 10px;
+  --danger:     #e05a6b;
+  --danger-bg:  #fdeef0;
+  --glass-blur: blur(18px);
+  --shadow:     0 4px 24px rgba(244,138,171,0.13);
+  --shadow-hover:0 8px 36px rgba(244,138,171,0.24);
+  --radius:     16px;
+  --radius-sm:  10px;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -37,6 +41,11 @@
 body {
   font-family: 'DM Sans', sans-serif;
   background: var(--bg);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(249,184,200,0.45) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(253,230,138,0.35) 0%, transparent 50%),
+    radial-gradient(circle at 60% 10%, rgba(244,138,171,0.2) 0%, transparent 40%);
+  background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
   overflow-x: hidden;
@@ -45,10 +54,13 @@ body {
 /* ─── SIDEBAR ─────────────────────────────────────────── */
 .sidebar {
   position: fixed; top: 0; left: 0; width: 260px; height: 100vh;
-  background: linear-gradient(160deg, #fce4ee 0%, #fff8d4 100%);
-  border-right: 1.5px solid var(--border);
+  background: rgba(255,248,249,0.82);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-right: 1.5px solid rgba(255,255,255,0.6);
   display: flex; flex-direction: column; z-index: 200;
   transition: transform .3s cubic-bezier(.4,0,.2,1);
+  box-shadow: 4px 0 30px rgba(244,138,171,0.08);
 }
 .sidebar-logo {
   padding: 28px 22px 18px;
@@ -56,13 +68,13 @@ body {
 }
 .sidebar-logo .logo-icon {
   width: 46px; height: 46px; border-radius: 14px;
-  background: linear-gradient(135deg, var(--rosa-dark), var(--amarelo-dark));
+  background: var(--rosa-dark);
   display: flex; align-items: center; justify-content: center;
   font-size: 22px; margin-bottom: 10px;
-  box-shadow: 0 4px 16px rgba(244,138,171,0.35);
+  box-shadow: 0 4px 16px rgba(244,138,171,0.4);
 }
 .sidebar-logo h1 { font-family: 'Playfair Display', serif; font-size: 17px; line-height: 1.2; color: var(--text); }
-.sidebar-logo p { font-size: 11px; color: var(--text-light); margin-top: 2px; font-weight: 500; letter-spacing: .5px; }
+.sidebar-logo p  { font-size: 11px; color: var(--text-light); margin-top: 2px; font-weight: 500; letter-spacing: .5px; }
 
 .nav-section { padding: 10px 14px 4px; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: 1.2px; text-transform: uppercase; }
 
@@ -70,10 +82,16 @@ body {
   display: flex; align-items: center; gap: 12px;
   padding: 11px 18px; margin: 2px 10px; border-radius: var(--radius-sm);
   font-size: 14px; font-weight: 500; color: var(--text-light);
-  cursor: pointer; transition: all .2s; border: none; background: none; width: calc(100% - 20px); text-align: left;
+  cursor: pointer; transition: all .2s; border: none; background: none;
+  width: calc(100% - 20px); text-align: left;
 }
-.nav-item:hover { background: rgba(249,184,200,.35); color: var(--text); }
-.nav-item.active { background: linear-gradient(135deg, var(--rosa), var(--amarelo)); color: var(--text); font-weight: 600; box-shadow: 0 4px 14px rgba(244,138,171,.25); }
+.nav-item:hover { background: rgba(244,138,171,0.18); color: var(--text); }
+.nav-item.active {
+  background: var(--rosa-dark);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(244,138,171,0.35);
+}
 .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
 
 .sidebar-footer { margin-top: auto; padding: 16px 18px; border-top: 1px solid var(--border); font-size: 11px; color: var(--text-muted); }
@@ -82,15 +100,20 @@ body {
 .main { margin-left: 260px; min-height: 100vh; }
 .topbar {
   position: sticky; top: 0; z-index: 100;
-  background: rgba(255,248,249,.92); backdrop-filter: blur(12px);
-  border-bottom: 1.5px solid var(--border);
+  background: rgba(255,248,249,0.85);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-bottom: 1.5px solid rgba(255,255,255,0.55);
   padding: 14px 28px; display: flex; align-items: center; gap: 14px;
+  box-shadow: 0 2px 16px rgba(244,138,171,0.07);
 }
 .hamburger { display: none; font-size: 22px; cursor: pointer; background: none; border: none; color: var(--text); }
 .topbar-title { font-family: 'Playfair Display', serif; font-size: 19px; font-weight: 700; flex: 1; }
 .topbar-stats { display: flex; gap: 14px; }
 .topbar-badge {
-  background: var(--rosa-soft); border: 1px solid var(--border);
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border-solid);
   border-radius: 50px; padding: 5px 14px; font-size: 12px; font-weight: 600; color: var(--text-light);
   white-space: nowrap;
 }
@@ -100,7 +123,11 @@ body {
 
 /* ─── SEARCH BAR ──────────────────────────────────────── */
 .search-container {
-  background: var(--surface); border: 2px solid var(--border); border-radius: 50px;
+  background: rgba(255,255,255,0.75);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.6);
+  border-radius: 50px;
   display: flex; align-items: center; gap: 10px; padding: 10px 20px;
   transition: border-color .2s, box-shadow .2s;
   box-shadow: var(--shadow);
@@ -114,85 +141,132 @@ body {
 /* ─── FILTERS ─────────────────────────────────────────── */
 .filters-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
 .filter-chip {
-  border: 1.5px solid var(--border); border-radius: 50px;
+  border: 1.5px solid var(--border-solid); border-radius: 50px;
   padding: 6px 16px; font-size: 13px; font-weight: 500; color: var(--text-light);
-  cursor: pointer; background: var(--surface); transition: all .2s; white-space: nowrap;
+  cursor: pointer; background: rgba(255,255,255,0.7); transition: all .2s; white-space: nowrap;
+  backdrop-filter: blur(6px);
 }
 .filter-chip:hover { border-color: var(--rosa-dark); color: var(--text); background: var(--rosa-soft); }
-.filter-chip.active { background: linear-gradient(135deg, var(--rosa), var(--amarelo)); border-color: transparent; color: var(--text); font-weight: 700; box-shadow: 0 3px 12px rgba(244,138,171,.25); }
+.filter-chip.active {
+  background: var(--rosa-dark);
+  border-color: var(--rosa-dark);
+  color: #fff;
+  font-weight: 700;
+  box-shadow: 0 3px 12px rgba(244,138,171,.3);
+}
 .filter-select {
-  border: 1.5px solid var(--border); border-radius: 50px; padding: 7px 16px;
+  border: 1.5px solid var(--border-solid); border-radius: 50px; padding: 7px 16px;
   font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--text-light);
-  cursor: pointer; background: var(--surface); outline: none; transition: all .2s;
+  cursor: pointer; background: rgba(255,255,255,0.7); outline: none; transition: all .2s;
   appearance: none; padding-right: 28px;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23b08090' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 12px center;
 }
 .filter-select:focus { border-color: var(--rosa-dark); }
 
-/* ─── STATS CARDS ─────────────────────────────────────── */
+/* ─── STATS CARDS — GLASS ─────────────────────────────── */
 .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin: 24px 0; }
 .stat-card {
-  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius);
-  padding: 20px; position: relative; overflow: hidden; transition: box-shadow .2s;
-  box-shadow: var(--shadow);
+  background: rgba(255,255,255,0.6);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius);
+  padding: 20px; position: relative; overflow: hidden;
+  transition: box-shadow .25s, transform .2s;
+  box-shadow: 0 4px 24px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
 }
-.stat-card:hover { box-shadow: var(--shadow-hover); }
+.stat-card:hover {
+  box-shadow: 0 10px 40px rgba(244,138,171,0.22), inset 0 1px 0 rgba(255,255,255,0.9);
+  transform: translateY(-2px);
+}
 .stat-card::before {
-  content: ''; position: absolute; top: -20px; right: -20px; width: 80px; height: 80px;
-  border-radius: 50%; opacity: .15;
+  content: ''; position: absolute; top: -24px; right: -24px; width: 90px; height: 90px;
+  border-radius: 50%; opacity: .2;
 }
-.stat-card.rosa::before { background: var(--rosa-dark); }
-.stat-card.amarelo::before { background: var(--amarelo-dark); }
-.stat-card.verde::before { background: var(--success); }
+.stat-card.rosa::before   { background: var(--rosa-dark); }
+.stat-card.amarelo::before{ background: var(--amarelo-dark); }
+.stat-card.verde::before  { background: var(--success); }
 .stat-card.danger::before { background: var(--danger); }
-.stat-label { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: .5px; text-transform: uppercase; }
-.stat-value { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; margin: 6px 0 4px; }
-.stat-card.rosa .stat-value { color: var(--rosa-dark); }
+.stat-label  { font-size: 12px; font-weight: 600; color: var(--text-muted); letter-spacing: .5px; text-transform: uppercase; }
+.stat-value  { font-family: 'Playfair Display', serif; font-size: 36px; font-weight: 900; margin: 6px 0 4px; }
+.stat-card.rosa    .stat-value { color: var(--rosa-dark); }
 .stat-card.amarelo .stat-value { color: var(--amarelo-dark); }
-.stat-card.verde .stat-value { color: var(--success); }
-.stat-card.danger .stat-value { color: var(--danger); }
-.stat-sub { font-size: 12px; color: var(--text-muted); }
-.stat-icon { position: absolute; top: 18px; right: 18px; font-size: 28px; opacity: .6; }
+.stat-card.verde   .stat-value { color: var(--success); }
+.stat-card.danger  .stat-value { color: var(--danger); }
+.stat-sub   { font-size: 12px; color: var(--text-muted); }
+.stat-icon  { position: absolute; top: 18px; right: 18px; font-size: 28px; opacity: .55; }
+
+/* ─── GLASS CARD (generic) ────────────────────────────── */
+.glass-card {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.75);
+}
 
 /* ─── TABLE ───────────────────────────────────────────── */
-.table-section { background: var(--surface); border-radius: var(--radius); border: 1.5px solid var(--border); overflow: hidden; box-shadow: var(--shadow); }
-.table-header { padding: 18px 22px; border-bottom: 1.5px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.table-header h2 { font-family: 'Playfair Display', serif; font-size: 18px; }
-.count-badge { background: var(--rosa-soft); color: var(--rosa-dark); font-size: 12px; font-weight: 700; padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border); }
-.btn {
-  padding: 8px 18px; border-radius: 50px; font-size: 13px; font-weight: 600; font-family: 'DM Sans', sans-serif;
-  border: none; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 6px;
+.table-section {
+  background: rgba(255,255,255,0.65);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: var(--radius);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  overflow: hidden;
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
 }
-.btn-primary { background: linear-gradient(135deg, var(--rosa-dark), var(--amarelo-dark)); color: var(--text); box-shadow: 0 4px 12px rgba(244,138,171,.3); }
-.btn-primary:hover { box-shadow: 0 6px 20px rgba(244,138,171,.4); transform: translateY(-1px); }
-.btn-ghost { background: var(--rosa-soft); color: var(--text-light); border: 1.5px solid var(--border); }
-.btn-ghost:hover { background: var(--rosa); color: var(--text); }
+.table-header {
+  padding: 18px 22px; border-bottom: 1.5px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  background: rgba(255,255,255,0.4);
+}
+.table-header h2 { font-family: 'Playfair Display', serif; font-size: 18px; }
+.count-badge {
+  background: rgba(249,184,200,0.4);
+  color: var(--rosa-dark); font-size: 12px; font-weight: 700;
+  padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border-solid);
+}
+.btn {
+  padding: 8px 18px; border-radius: 50px; font-size: 13px; font-weight: 600;
+  font-family: 'DM Sans', sans-serif; border: none; cursor: pointer; transition: all .2s;
+  display: inline-flex; align-items: center; gap: 6px;
+}
+.btn-primary { background: var(--rosa-dark); color: #fff; box-shadow: 0 3px 12px rgba(244,138,171,.35); }
+.btn-primary:hover { background: #e8709a; box-shadow: 0 6px 20px rgba(244,138,171,.45); transform: translateY(-1px); }
+.btn-amarelo { background: var(--amarelo-dark); color: var(--text); box-shadow: 0 3px 12px rgba(246,195,65,.35); }
+.btn-amarelo:hover { background: #e8b52e; box-shadow: 0 6px 20px rgba(246,195,65,.4); transform: translateY(-1px); }
+.btn-ghost {
+  background: rgba(255,255,255,0.7); color: var(--text-light);
+  border: 1.5px solid var(--border-solid); backdrop-filter: blur(6px);
+}
+.btn-ghost:hover { background: var(--rosa-soft); color: var(--text); border-color: var(--rosa-dark); }
 .btn-sm { padding: 5px 12px; font-size: 12px; }
 .btn-danger { background: var(--danger-bg); color: var(--danger); border: 1.5px solid #f9c0c7; }
 .btn-danger:hover { background: var(--danger); color: white; }
 .btn-success { background: var(--success-bg); color: #2d7a4f; border: 1.5px solid #b0e6c4; }
 .btn-success:hover { background: var(--success); color: white; }
+.btn-print { background: var(--amarelo-dark); color: var(--text); box-shadow: 0 3px 12px rgba(246,195,65,.3); }
+.btn-print:hover { background: #e8b52e; transform: translateY(-1px); }
 
 .table-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; }
-thead tr { background: linear-gradient(135deg, var(--rosa-soft), var(--amarelo-soft)); }
+thead tr { background: rgba(249,184,200,0.18); }
 th { padding: 12px 16px; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .8px; text-align: left; white-space: nowrap; }
-td { padding: 12px 16px; font-size: 13px; border-top: 1px solid #fae8f0; vertical-align: middle; }
-tr:hover td { background: var(--rosa-soft); }
-.td-nome { font-weight: 600; color: var(--text); max-width: 180px; }
+td { padding: 12px 16px; font-size: 13px; border-top: 1px solid rgba(250,232,240,0.9); vertical-align: middle; }
+tr:hover td { background: rgba(249,184,200,0.12); }
+.td-nome  { font-weight: 600; color: var(--text); max-width: 180px; }
 .td-razao { color: var(--text-light); font-size: 12px; max-width: 160px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.td-end { color: var(--text-light); font-size: 12px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.badge {
-  display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 700; white-space: nowrap;
-}
-.badge-baixo { background: var(--success-bg); color: #2a6e47; }
-.badge-alto { background: var(--danger-bg); color: var(--danger); }
-.badge-sem { background: #f5f0f2; color: var(--text-muted); }
-.badge-bairro { background: var(--amarelo-soft); color: #7a5c00; border: 1px solid var(--amarelo-dark); }
-.badge-cat { background: var(--rosa-soft); color: var(--rosa-dark); border: 1px solid var(--border); }
+.td-end   { color: var(--text-light); font-size: 12px; max-width: 150px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.badge { display: inline-block; padding: 3px 10px; border-radius: 50px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+.badge-baixo     { background: var(--success-bg); color: #2a6e47; }
+.badge-alto      { background: var(--danger-bg); color: var(--danger); }
+.badge-sem       { background: #f5f0f2; color: var(--text-muted); }
+.badge-bairro    { background: rgba(253,230,138,0.55); color: #7a5c00; border: 1px solid var(--amarelo-dark); }
+.badge-cat       { background: rgba(249,184,200,0.45); color: #8a2848; border: 1px solid var(--border-solid); }
 .badge-fiscalizado { background: var(--success-bg); color: #2a6e47; }
-.badge-pendente { background: var(--warning-bg); color: #7a4e00; }
+.badge-pendente  { background: var(--warning-bg); color: #7a4e00; }
 .badge-irregular { background: var(--danger-bg); color: var(--danger); }
 
 .td-actions { display: flex; gap: 6px; flex-wrap: nowrap; }
@@ -200,32 +274,51 @@ tr:hover td { background: var(--rosa-soft); }
   width: 30px; height: 30px; border-radius: 8px; border: none; cursor: pointer;
   display: flex; align-items: center; justify-content: center; font-size: 14px; transition: all .15s;
 }
-.action-btn.view { background: var(--amarelo-soft); color: var(--amarelo-dark); }
-.action-btn.view:hover { background: var(--amarelo-dark); color: white; }
-.action-btn.inspect { background: var(--rosa-soft); color: var(--rosa-dark); }
+.action-btn.view    { background: rgba(253,230,138,0.5); color: #9a7000; }
+.action-btn.view:hover    { background: var(--amarelo-dark); color: var(--text); }
+.action-btn.inspect { background: rgba(249,184,200,0.5); color: var(--rosa-dark); }
 .action-btn.inspect:hover { background: var(--rosa-dark); color: white; }
-.action-btn.edit { background: #e8f4ff; color: #3a7dc9; }
-.action-btn.edit:hover { background: #3a7dc9; color: white; }
-.action-btn.del { background: var(--danger-bg); color: var(--danger); }
-.action-btn.del:hover { background: var(--danger); color: white; }
+.action-btn.edit    { background: #e8f4ff; color: #3a7dc9; }
+.action-btn.edit:hover    { background: #3a7dc9; color: white; }
+.action-btn.del     { background: var(--danger-bg); color: var(--danger); }
+.action-btn.del:hover     { background: var(--danger); color: white; }
 
 .pagination { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .pagination-info { font-size: 13px; color: var(--text-muted); }
 .pagination-btns { display: flex; gap: 6px; }
-.page-btn { width: 34px; height: 34px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s; }
+.page-btn {
+  width: 34px; height: 34px; border-radius: 8px;
+  border: 1.5px solid var(--border-solid);
+  background: rgba(255,255,255,0.6); cursor: pointer; font-size: 13px; font-weight: 600; transition: all .15s;
+}
 .page-btn:hover { background: var(--rosa-soft); border-color: var(--rosa-dark); }
-.page-btn.active { background: linear-gradient(135deg, var(--rosa-dark), var(--amarelo-dark)); border-color: transparent; color: var(--text); }
+.page-btn.active { background: var(--rosa-dark); border-color: var(--rosa-dark); color: #fff; }
 .page-btn:disabled { opacity: .4; cursor: not-allowed; }
 
 /* ─── MODAL ───────────────────────────────────────────── */
-.overlay { position: fixed; inset: 0; background: rgba(45,27,36,.4); backdrop-filter: blur(4px); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(45,27,36,.35);
+  backdrop-filter: blur(6px);
+  z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px;
+}
 .overlay.open { display: flex; }
 .modal {
-  background: var(--surface); border-radius: var(--radius); max-width: 600px; width: 100%; max-height: 90vh;
-  overflow-y: auto; box-shadow: 0 24px 80px rgba(45,27,36,.25); animation: modalIn .25s ease;
+  background: rgba(255,255,255,0.88);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.7);
+  border-radius: var(--radius); max-width: 600px; width: 100%; max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 24px 80px rgba(45,27,36,.2), inset 0 1px 0 rgba(255,255,255,0.9);
+  animation: modalIn .25s ease;
 }
 @keyframes modalIn { from { opacity:0; transform: scale(.95) translateY(20px); } to { opacity:1; transform: none; } }
-.modal-header { padding: 22px 24px 16px; border-bottom: 1.5px solid var(--border); display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; background: linear-gradient(135deg, var(--rosa-soft), var(--amarelo-soft)); }
+.modal-header {
+  padding: 22px 24px 16px; border-bottom: 1.5px solid var(--border);
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+  background: rgba(249,184,200,0.18);
+}
 .modal-header h2 { font-family: 'Playfair Display', serif; font-size: 20px; line-height: 1.2; }
 .modal-close { background: none; border: none; font-size: 22px; cursor: pointer; color: var(--text-muted); line-height: 1; transition: color .15s; }
 .modal-close:hover { color: var(--danger); }
@@ -234,79 +327,104 @@ tr:hover td { background: var(--rosa-soft); }
 .info-item label { display: block; font-size: 10px; font-weight: 700; color: var(--text-muted); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
 .info-item p { font-size: 14px; color: var(--text); font-weight: 500; }
 .info-item.full { grid-column: 1/-1; }
-.divider { height: 1.5px; background: linear-gradient(to right, var(--rosa-soft), var(--amarelo-soft)); margin: 18px 0; border: none; }
+.divider { height: 1.5px; background: rgba(244,138,171,0.2); margin: 18px 0; border: none; }
 
 /* Inspection form */
 .inspect-form { display: grid; gap: 14px; }
 .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--text-muted); letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }
 .form-input, .form-select, .form-textarea {
-  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border); border-radius: var(--radius-sm);
-  font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text); background: var(--surface);
-  outline: none; transition: border-color .2s;
+  width: 100%; padding: 10px 14px; border: 1.5px solid var(--border-solid); border-radius: var(--radius-sm);
+  font-size: 14px; font-family: 'DM Sans', sans-serif; color: var(--text);
+  background: rgba(255,255,255,0.75); outline: none; transition: border-color .2s;
 }
-.form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--rosa-dark); box-shadow: 0 0 0 3px rgba(244,138,171,.15); }
+.form-input:focus, .form-select:focus, .form-textarea:focus {
+  border-color: var(--rosa-dark);
+  box-shadow: 0 0 0 3px rgba(244,138,171,.15);
+  background: rgba(255,255,255,0.9);
+}
 .form-textarea { min-height: 90px; resize: vertical; }
 .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 
 /* History */
-.history-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; position: relative; }
+.history-item { background: rgba(253,244,246,0.7); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 10px; position: relative; }
 .history-item::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; border-radius: 4px 0 0 4px; }
 .history-item.fiscalizado::before { background: var(--success); }
-.history-item.pendente::before { background: var(--warning); }
-.history-item.irregular::before { background: var(--danger); }
-.history-date { font-size: 11px; color: var(--text-muted); font-weight: 600; }
-.history-status { float: right; }
+.history-item.pendente::before    { background: var(--warning); }
+.history-item.irregular::before   { background: var(--danger); }
+.history-date  { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+.history-status{ float: right; }
 .history-agent { font-size: 13px; font-weight: 600; margin-top: 4px; }
-.history-obs { font-size: 12px; color: var(--text-light); margin-top: 4px; }
+.history-obs   { font-size: 12px; color: var(--text-light); margin-top: 4px; }
 
-/* ─── DASHBOARD PAGE ──────────────────────────────────── */
+/* ─── DASHBOARD ──────────────────────────────────────── */
 .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
-.dash-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 22px; box-shadow: var(--shadow); }
+.dash-card {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius); padding: 22px;
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+  transition: box-shadow .2s, transform .2s;
+}
+.dash-card:hover {
+  box-shadow: 0 8px 36px rgba(244,138,171,0.18), inset 0 1px 0 rgba(255,255,255,0.9);
+  transform: translateY(-1px);
+}
 .dash-card h3 { font-family: 'Playfair Display', serif; font-size: 16px; margin-bottom: 16px; }
 .bar-item { margin-bottom: 12px; }
 .bar-label { display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 5px; }
 .bar-label span:last-child { font-weight: 700; color: var(--rosa-dark); }
-.bar-track { height: 8px; background: var(--rosa-soft); border-radius: 50px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 50px; background: linear-gradient(to right, var(--rosa-dark), var(--amarelo-dark)); transition: width .5s ease; }
+.bar-track { height: 8px; background: rgba(249,184,200,0.3); border-radius: 50px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 50px; background: var(--rosa-dark); transition: width .5s ease; }
 .pie-legend { display: flex; flex-direction: column; gap: 8px; }
-.pie-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-.pie-dot { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
-.pie-name { flex: 1; }
-.pie-val { font-weight: 700; }
+.pie-row    { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.pie-dot    { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+.pie-name   { flex: 1; }
+.pie-val    { font-weight: 700; }
 
-/* ─── CONFIG PAGE ─────────────────────────────────────── */
+/* ─── CONFIGURAÇÕES ──────────────────────────────────── */
 .config-sections { display: grid; gap: 20px; }
-.config-card { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); }
+.config-card {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius); padding: 24px;
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+}
 .config-card h3 { font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 6px; }
-.config-card p { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
-.switch-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); }
+.config-card p  { font-size: 13px; color: var(--text-muted); margin-bottom: 18px; }
+.switch-row   { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-top: 1px solid var(--border); }
 .switch-label { font-size: 14px; font-weight: 500; }
-.switch-sub { font-size: 12px; color: var(--text-muted); }
+.switch-sub   { font-size: 12px; color: var(--text-muted); }
 .switch { position: relative; display: inline-block; width: 42px; height: 24px; }
 .switch input { opacity: 0; width: 0; height: 0; }
-.slider { position: absolute; cursor: pointer; inset: 0; background: var(--border); border-radius: 24px; transition: .3s; }
+.slider { position: absolute; cursor: pointer; inset: 0; background: var(--border-solid); border-radius: 24px; transition: .3s; }
 .slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .3s; }
-input:checked + .slider { background: linear-gradient(135deg, var(--rosa-dark), var(--amarelo-dark)); }
+input:checked + .slider { background: var(--rosa-dark); }
 input:checked + .slider::before { transform: translateX(18px); }
 .agent-list { display: grid; gap: 10px; }
-.agent-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
-.agent-avatar { width: 36px; height: 36px; border-radius: 50%; background: linear-gradient(135deg, var(--rosa), var(--amarelo)); display: flex; align-items: center; justify-content: center; font-size: 16px; }
-.agent-name { font-weight: 600; font-size: 14px; }
-.agent-role { font-size: 12px; color: var(--text-muted); }
-.agent-actions { margin-left: auto; display: flex; gap: 6px; }
-.input-group { display: flex; gap: 10px; }
+.agent-item { background: rgba(253,244,246,0.7); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 16px; display: flex; align-items: center; gap: 12px; }
+.agent-avatar { width: 36px; height: 36px; border-radius: 50%; background: var(--rosa-dark); display: flex; align-items: center; justify-content: center; font-size: 16px; }
+.agent-name   { font-weight: 600; font-size: 14px; }
+.agent-role   { font-size: 12px; color: var(--text-muted); }
+.agent-actions{ margin-left: auto; display: flex; gap: 6px; }
+.input-group  { display: flex; gap: 10px; }
 .input-group .form-input { flex: 1; }
 
-/* ─── REPORT PAGE ─────────────────────────────────────── */
-.report-filters { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); padding: 22px; margin-bottom: 22px; box-shadow: var(--shadow); }
+/* ─── RELATÓRIOS ─────────────────────────────────────── */
+.report-filters {
+  background: rgba(255,255,255,0.62);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1.5px solid rgba(255,255,255,0.55);
+  border-radius: var(--radius); padding: 22px; margin-bottom: 22px;
+  box-shadow: 0 4px 28px rgba(244,138,171,0.10), inset 0 1px 0 rgba(255,255,255,0.8);
+}
 .report-filters h3 { font-family: 'Playfair Display', serif; font-size: 18px; margin-bottom: 16px; }
-.report-table { background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius); overflow: hidden; box-shadow: var(--shadow); }
-.report-row { display: grid; grid-template-columns: 1fr 60px 60px 60px 80px; gap: 0; }
-.report-row.header { background: linear-gradient(135deg, var(--rosa-soft), var(--amarelo-soft)); padding: 12px 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); }
-.report-row.data { padding: 14px 20px; border-top: 1px solid #fae8f0; align-items: center; }
-.report-row.data:hover { background: var(--rosa-soft); }
 
-/* ─── MOBILE ──────────────────────────────────────────── */
+/* ─── MOBILE ─────────────────────────────────────────── */
 .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(45,27,36,.4); z-index: 190; }
 
 @media (max-width: 768px) {
@@ -317,52 +435,113 @@ input:checked + .slider::before { transform: translateX(18px); }
   .hamburger { display: flex; }
   .topbar-stats { display: none; }
   .stats-grid { grid-template-columns: 1fr 1fr; }
-  .dash-grid { grid-template-columns: 1fr; }
-  .info-grid { grid-template-columns: 1fr; }
-  .form-row { grid-template-columns: 1fr; }
+  .dash-grid  { grid-template-columns: 1fr; }
+  .info-grid  { grid-template-columns: 1fr; }
+  .form-row   { grid-template-columns: 1fr; }
   .content { padding: 16px; }
-  .topbar { padding: 12px 16px; }
+  .topbar  { padding: 12px 16px; }
   th:nth-child(n+5) { display: none; }
   td:nth-child(n+5) { display: none; }
 }
-
 @media (max-width: 480px) {
   .stats-grid { grid-template-columns: 1fr; }
 }
 
-/* ─── PAGES ───────────────────────────────────────────── */
+/* ─── PAGES ──────────────────────────────────────────── */
 .page { display: none; }
 .page.active { display: block; }
 
-/* ─── EMPTY STATE ─────────────────────────────────────── */
+/* ─── EMPTY STATE ────────────────────────────────────── */
 .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); }
 .empty-state .icon { font-size: 52px; margin-bottom: 14px; }
 .empty-state h3 { font-size: 18px; font-weight: 600; margin-bottom: 6px; color: var(--text-light); }
-.empty-state p { font-size: 14px; }
+.empty-state p  { font-size: 14px; }
 
-/* ─── TOAST ───────────────────────────────────────────── */
+/* ─── TOAST ──────────────────────────────────────────── */
 .toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
 .toast {
-  background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.92);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255,255,255,0.6);
+  border-radius: var(--radius-sm);
   padding: 14px 18px; box-shadow: var(--shadow-hover); display: flex; align-items: center; gap: 10px;
   font-size: 14px; min-width: 280px; max-width: 380px;
   animation: slideIn .3s ease; transform-origin: bottom right;
 }
 .toast.success { border-left: 4px solid var(--success); }
-.toast.error { border-left: 4px solid var(--danger); }
-@keyframes slideIn { from { opacity:0; transform: translateX(40px); } to { opacity:1; transform: none; } }
-@keyframes slideOut { to { opacity:0; transform: translateX(40px); } }
+.toast.error   { border-left: 4px solid var(--danger); }
+@keyframes slideIn  { from { opacity:0; transform: translateX(40px); } to { opacity:1; transform: none; } }
+@keyframes slideOut { to   { opacity:0; transform: translateX(40px); } }
 
-/* ─── LOADING ─────────────────────────────────────────── */
-.skeleton { background: linear-gradient(90deg, var(--rosa-soft) 25%, var(--amarelo-soft) 50%, var(--rosa-soft) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+/* ─── LOADING ────────────────────────────────────────── */
+.skeleton { background: rgba(249,184,200,0.3); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
-/* Alerts vencimento */
-.alert-strip { background: linear-gradient(135deg, var(--warning-bg), var(--amarelo-soft)); border: 1.5px solid var(--amarelo-dark); border-radius: var(--radius-sm); padding: 12px 18px; font-size: 13px; display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+.alert-strip {
+  background: rgba(255,244,224,0.85);
+  backdrop-filter: blur(10px);
+  border: 1.5px solid var(--amarelo-dark);
+  border-radius: var(--radius-sm); padding: 12px 18px; font-size: 13px;
+  display: flex; align-items: center; gap: 10px; margin-bottom: 16px;
+}
+
+/* ─── PRINT MODAL ────────────────────────────────────── */
+#printPreviewModal .modal { max-width: 860px; }
+#printContent {
+  font-family: 'DM Sans', sans-serif;
+  color: #1a1a2e;
+  padding: 0;
+}
+#printContent .print-header {
+  background: var(--rosa-dark);
+  color: white; padding: 28px 32px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-radius: var(--radius) var(--radius) 0 0;
+}
+#printContent .print-header h1 { font-family: 'Playfair Display', serif; font-size: 22px; }
+#printContent .print-header .print-meta { font-size: 12px; opacity: .9; text-align: right; }
+#printContent .print-body { padding: 24px 32px; }
+#printContent .print-section-title {
+  font-family: 'Playfair Display', serif; font-size: 15px;
+  border-bottom: 2px solid var(--rosa-dark); padding-bottom: 6px; margin: 20px 0 12px;
+  color: var(--rosa-dark);
+}
+#printContent .print-summary {
+  display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 24px;
+}
+#printContent .print-stat {
+  background: rgba(249,184,200,0.2); border: 1px solid var(--border-solid);
+  border-radius: 10px; padding: 14px; text-align: center;
+}
+#printContent .print-stat .pv { font-family: 'Playfair Display', serif; font-size: 28px; font-weight: 900; color: var(--rosa-dark); }
+#printContent .print-stat .pl { font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; }
+#printContent table { width: 100%; border-collapse: collapse; font-size: 12px; }
+#printContent thead tr { background: var(--rosa-dark); color: white; }
+#printContent th { padding: 9px 10px; text-align: left; font-weight: 700; font-size: 11px; letter-spacing: .5px; text-transform: uppercase; }
+#printContent td { padding: 8px 10px; border-bottom: 1px solid #fae8f0; }
+#printContent tr:nth-child(even) td { background: rgba(249,184,200,0.08); }
+#printContent .print-footer {
+  margin-top: 32px; display: grid; grid-template-columns: 1fr 1fr; gap: 32px;
+  border-top: 2px solid #eee; padding-top: 24px;
+}
+#printContent .sign-line { border-top: 1.5px solid #333; margin-top: 40px; padding-top: 6px; font-size: 11px; color: #555; text-align: center; }
+
+@media print {
+  body > *:not(#printWindow) { display: none !important; }
+}
 </style>
-<script src="dados.js"></script>
 </head>
 <body>
+
+<!-- Loading Overlay -->
+<div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(245,232,239,.96);z-index:9000;flex-direction:column;align-items:center;justify-content:center;gap:16px">
+  <div style="font-size:44px">🏥</div>
+  <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700">VISA Careiro</div>
+  <div style="font-size:13px;color:var(--text-muted)">Carregando dados da nuvem…</div>
+  <div style="width:200px;height:6px;background:rgba(249,184,200,0.4);border-radius:50px;overflow:hidden;margin-top:4px">
+    <div style="height:100%;width:60%;background:var(--rosa-dark);border-radius:50px;animation:shimmer 1.5s infinite;background-size:200% 100%"></div>
+  </div>
+</div>
 
 <!-- Mobile Overlay -->
 <div class="mobile-overlay" id="mobileOverlay" onclick="closeSidebar()"></div>
@@ -374,16 +553,16 @@ input:checked + .slider::before { transform: translateX(18px); }
     <h1>VISA Careiro</h1>
     <p>Cadastro Sanitário Municipal</p>
   </div>
-  
+
   <div class="nav-section">Menu Principal</div>
-  <button class="nav-item active" onclick="navigate('dashboard')"><span class="icon">📊</span> Dashboard</button>
-  <button class="nav-item" onclick="navigate('estabelecimentos')"><span class="icon">🏪</span> Estabelecimentos</button>
-  <button class="nav-item" onclick="navigate('fiscalizacao')"><span class="icon">🔍</span> Fiscalizações</button>
-  <button class="nav-item" onclick="navigate('relatorios')"><span class="icon">📋</span> Relatórios</button>
-  
+  <button class="nav-item active" data-page="dashboard"        onclick="navigate('dashboard')"><span class="icon">📊</span> Dashboard</button>
+  <button class="nav-item"        data-page="estabelecimentos" onclick="navigate('estabelecimentos')"><span class="icon">🏪</span> Estabelecimentos</button>
+  <button class="nav-item"        data-page="fiscalizacao"     onclick="navigate('fiscalizacao')"><span class="icon">🔍</span> Fiscalizações</button>
+  <button class="nav-item"        data-page="relatorios"       onclick="navigate('relatorios')"><span class="icon">📋</span> Relatórios</button>
+
   <div class="nav-section">Sistema</div>
-  <button class="nav-item" onclick="navigate('configuracoes')"><span class="icon">⚙️</span> Configurações</button>
-  
+  <button class="nav-item"        data-page="configuracoes"    onclick="navigate('configuracoes')"><span class="icon">⚙️</span> Configurações</button>
+
   <div class="sidebar-footer">
     <div>Município de Careiro, AM</div>
     <div style="margin-top:4px">VISA — Vigilância Sanitária</div>
@@ -396,7 +575,7 @@ input:checked + .slider::before { transform: translateX(18px); }
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
     <div class="topbar-title" id="topbarTitle">Dashboard</div>
     <div class="topbar-stats">
-      <div class="topbar-badge">Total: <span id="badgeTotal">305</span></div>
+      <div class="topbar-badge">Total: <span id="badgeTotal">0</span></div>
       <div class="topbar-badge">Fiscalizados: <span id="badgeFiscalizado">0</span></div>
     </div>
   </div>
@@ -410,7 +589,7 @@ input:checked + .slider::before { transform: translateX(18px); }
         <div class="stat-card rosa">
           <div class="stat-icon">🏪</div>
           <div class="stat-label">Estabelecimentos</div>
-          <div class="stat-value" id="statTotal">305</div>
+          <div class="stat-value" id="statTotal">0</div>
           <div class="stat-sub">Cadastrados no sistema</div>
         </div>
         <div class="stat-card amarelo">
@@ -428,7 +607,7 @@ input:checked + .slider::before { transform: translateX(18px); }
         <div class="stat-card danger">
           <div class="stat-icon">⚠️</div>
           <div class="stat-label">Pendentes</div>
-          <div class="stat-value" id="statPendente">305</div>
+          <div class="stat-value" id="statPendente">0</div>
           <div class="stat-sub">Sem vistoria registrada</div>
         </div>
       </div>
@@ -462,15 +641,14 @@ input:checked + .slider::before { transform: translateX(18px); }
       </div>
 
       <div class="filters-row">
-        <button class="filter-chip active" onclick="setFilter('bairro','')">Todos os bairros</button>
-        <button class="filter-chip" onclick="setFilter('bairro','Mercado Central')">Mercado Central</button>
-        <button class="filter-chip" onclick="setFilter('bairro','Centro')">Centro</button>
-        <button class="filter-chip" onclick="setFilter('bairro','Bairro Novo')">Bairro Novo</button>
-        <button class="filter-chip" onclick="setFilter('bairro','Vista Alegre')">Vista Alegre</button>
-        <button class="filter-chip" onclick="setFilter('bairro','Novo Horizonte')">Novo Horizonte</button>
-        <button class="filter-chip" onclick="setFilter('bairro','Nova Esperança')">Nova Esperança</button>
-        <button class="filter-chip" onclick="setFilter('bairro','Sebastião Borges')">Sebastião Borges</button>
-        <button class="filter-chip" onclick="setFilter('bairro','Churrasquinhos')">Churrasquinhos</button>
+        <button class="filter-chip active" data-bairro="" onclick="setFilter('bairro','')">Todos os bairros</button>
+        <button class="filter-chip" data-bairro="Mercado Central"  onclick="setFilter('bairro','Mercado Central')">Mercado Central</button>
+        <button class="filter-chip" data-bairro="Centro"           onclick="setFilter('bairro','Centro')">Centro</button>
+        <button class="filter-chip" data-bairro="Bairro Novo"      onclick="setFilter('bairro','Bairro Novo')">Bairro Novo</button>
+        <button class="filter-chip" data-bairro="Vista Alegre"     onclick="setFilter('bairro','Vista Alegre')">Vista Alegre</button>
+        <button class="filter-chip" data-bairro="Novo Horizonte"   onclick="setFilter('bairro','Novo Horizonte')">Novo Horizonte</button>
+        <button class="filter-chip" data-bairro="Nova Esperança"   onclick="setFilter('bairro','Nova Esperança')">Nova Esperança</button>
+        <button class="filter-chip" data-bairro="Sebastião Borges" onclick="setFilter('bairro','Sebastião Borges')">Sebastião Borges</button>
         <select class="filter-select" id="filterCategoria" onchange="onFilterCategoria()">
           <option value="">Todas as categorias</option>
         </select>
@@ -491,9 +669,9 @@ input:checked + .slider::before { transform: translateX(18px); }
         <div class="table-header">
           <h2>Estabelecimentos</h2>
           <div style="display:flex;gap:10px;align-items:center">
-            <span class="count-badge" id="resultCount">305 resultados</span>
+            <span class="count-badge" id="resultCount">0 resultados</span>
             <button class="btn btn-primary btn-sm" onclick="openAdd()">＋ Novo</button>
-            <button class="btn btn-primary btn-sm" onclick="exportCSV()">⬇️ Exportar CSV</button>
+            <button class="btn btn-print btn-sm" onclick="imprimirEstabelecimentos()">🖨️ Imprimir</button>
           </div>
         </div>
         <div class="table-scroll">
@@ -535,7 +713,10 @@ input:checked + .slider::before { transform: translateX(18px); }
       <div class="table-section" style="margin-top:20px">
         <div class="table-header">
           <h2>Registro de Fiscalizações</h2>
-          <span class="count-badge" id="fiscCount">0 registros</span>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="count-badge" id="fiscCount">0 registros</span>
+            <button class="btn btn-print btn-sm" onclick="imprimirFiscalizacoes()">🖨️ Imprimir</button>
+          </div>
         </div>
         <div class="table-scroll">
           <table>
@@ -577,7 +758,6 @@ input:checked + .slider::before { transform: translateX(18px); }
               <option>Novo Horizonte</option>
               <option>Nova Esperança</option>
               <option>Sebastião Borges</option>
-              <option>Churrasquinhos</option>
             </select>
           </div>
           <div class="form-group">
@@ -597,9 +777,9 @@ input:checked + .slider::before { transform: translateX(18px); }
               <option>ALTO RISCO</option>
             </select>
           </div>
-          <div class="form-group" style="display:flex;align-items:flex-end">
+          <div class="form-group" style="display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap">
             <button class="btn btn-primary" onclick="gerarRelatorio()">📊 Gerar</button>
-            <button class="btn btn-ghost" onclick="exportRelCSV()" style="margin-left:8px">⬇️ CSV</button>
+            <button class="btn btn-print"   onclick="abrirRelatorioImpressao()">🖨️ Imprimir</button>
           </div>
         </div>
       </div>
@@ -634,6 +814,8 @@ input:checked + .slider::before { transform: translateX(18px); }
     <!-- ═══════════ CONFIGURAÇÕES ═══════════ -->
     <div class="page" id="page-configuracoes">
       <div class="config-sections">
+
+        <!-- Agentes -->
         <div class="config-card">
           <h3>👤 Agentes de Fiscalização</h3>
           <p>Gerencie os fiscais da Vigilância Sanitária</p>
@@ -645,6 +827,7 @@ input:checked + .slider::before { transform: translateX(18px); }
           <div class="agent-list" id="agentList"></div>
         </div>
 
+        <!-- Notificações -->
         <div class="config-card">
           <h3>🔔 Notificações</h3>
           <p>Controle de alertas e avisos do sistema</p>
@@ -658,21 +841,23 @@ input:checked + .slider::before { transform: translateX(18px); }
           </div>
         </div>
 
+        <!-- Backup completo -->
         <div class="config-card">
-          <h3>🗄️ Dados do Sistema</h3>
-          <p>Backup e restauração das fiscalizações registradas</p>
+          <h3>💾 Backup Completo do Sistema</h3>
+          <p>Exporta ou restaura <strong>todos os dados</strong>: estabelecimentos base, fiscalizações, agentes e configurações em um único arquivo JSON.</p>
           <div style="display:flex;gap:12px;flex-wrap:wrap">
-            <button class="btn btn-primary" onclick="backupData()">⬇️ Backup JSON</button>
-            <button class="btn btn-ghost" onclick="importBackup()">⬆️ Importar Backup</button>
-            <button class="btn btn-danger" onclick="clearAllFiscalizacoes()">🗑️ Limpar Fiscalizações</button>
+            <button class="btn btn-primary" onclick="backupData()">⬇️ Exportar Backup Completo</button>
+            <button class="btn btn-ghost"   onclick="importBackup()">⬆️ Restaurar Backup</button>
+            <button class="btn btn-danger"  onclick="clearAllFiscalizacoes()">🗑️ Limpar Fiscalizações</button>
           </div>
           <input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)">
           <div style="margin-top:14px;font-size:13px;color:var(--text-muted)" id="configStats"></div>
         </div>
+
       </div>
     </div>
 
-  </div>
+  </div><!-- /content -->
 </main>
 
 <!-- ─── MODAL DETALHES ─────────────────────────────── -->
@@ -751,7 +936,6 @@ input:checked + .slider::before { transform: translateX(18px); }
     </div>
     <div class="modal-body">
       <div class="inspect-form">
-
         <div class="form-row">
           <div class="form-group">
             <label>Nome Fantasia *</label>
@@ -762,7 +946,6 @@ input:checked + .slider::before { transform: translateX(18px); }
             <input class="form-input" id="estRazao" placeholder="Ex: JOÃO DA SILVA ME">
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label>Endereço</label>
@@ -779,11 +962,9 @@ input:checked + .slider::before { transform: translateX(18px); }
               <option>Novo Horizonte</option>
               <option>Nova Esperança</option>
               <option>Sebastião Borges</option>
-              <option>Churrasquinhos</option>
             </select>
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label>Categoria</label>
@@ -795,7 +976,6 @@ input:checked + .slider::before { transform: translateX(18px); }
             <input class="form-input" id="estAtividade" placeholder="Ex: VENDA DE ESTIVAS EM GERAL">
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label>CNAE</label>
@@ -810,7 +990,6 @@ input:checked + .slider::before { transform: translateX(18px); }
             </select>
           </div>
         </div>
-
         <div class="form-row">
           <div class="form-group">
             <label>Último Licenciamento / Inspeção</label>
@@ -821,7 +1000,6 @@ input:checked + .slider::before { transform: translateX(18px); }
             <input class="form-input" id="estOrgao" placeholder="Ex: VISA/CAREIRO">
           </div>
         </div>
-
         <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
           <button class="btn btn-ghost" onclick="closeModal('modalEstab')">Cancelar</button>
           <button class="btn btn-primary" onclick="saveEstab()">💾 Salvar</button>
@@ -850,62 +1028,214 @@ input:checked + .slider::before { transform: translateX(18px); }
   </div>
 </div>
 
+<!-- ─── MODAL PREVIEW DE IMPRESSÃO ────────────────── -->
+<div class="overlay" id="printPreviewModal">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-header">
+      <div>
+        <h2 id="printModalTitle">🖨️ Imprimir</h2>
+        <div style="font-size:13px;color:var(--text-light);margin-top:4px" id="printModalSub">Pré-visualização do documento oficial</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('printPreviewModal')">✕</button>
+    </div>
+    <div class="modal-body" style="padding:0">
+      <div style="padding:16px 24px;background:rgba(249,184,200,0.12);border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn btn-primary" onclick="executarImpressao()">🖨️ Imprimir / Salvar PDF</button>
+        <button class="btn btn-ghost"   onclick="closeModal('printPreviewModal')">Fechar</button>
+        <span style="font-size:12px;color:var(--text-muted);margin-left:auto">Use Ctrl+P ou o botão acima para imprimir</span>
+      </div>
+      <div style="padding:24px;background:#f8f8f8;min-height:400px">
+        <div id="printContent" style="background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08)"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
 // ═══════════════════════════════════════════════════════
-// DATA
+// ESTADO GLOBAL
 // ═══════════════════════════════════════════════════════
 let DADOS = [];
 let _DADOS_ORIGINAL = [];
+let currentPage      = 'dashboard';
+let currentEstabPage = 1;
+const PAGE_SIZE      = 20;
+let filters          = { q: '', bairro: '', categoria: '', risco: '', status: '' };
+let currentInspectId = null;
+let currentEditId    = null;
+let fiscFilter       = '';
+let relResultados    = [];
+let _pendingDeleteId = null;
 
 // ═══════════════════════════════════════════════════════
-// LOCAL STORAGE HELPERS
+// FIREBASE SETUP
 // ═══════════════════════════════════════════════════════
-function getLS(key, def) {
-  try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : def; } catch { return def; }
-}
-function setLS(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} }
+const firebaseConfig = {
+  apiKey: "AIzaSyDobyr74BiOubbSM44k6oKlfgmmuiGCk94",
+  authDomain: "visa-82b2c.firebaseapp.com",
+  projectId: "visa-82b2c",
+  storageBucket: "visa-82b2c.firebasestorage.app",
+  messagingSenderId: "1075858639777",
+  appId: "1:1075858639777:web:412689646dfb3aa6ba99e0"
+};
+const _fbApp     = firebase.initializeApp(firebaseConfig);
+const _db        = firebase.firestore(_fbApp);
+const _STATE_REF = _db.collection('visa_state').doc('app');
+const _BASE_REF  = _db.collection('visa_state').doc('base_data');
 
-function getInspections() { return getLS('visa_inspections', {}); }
-function saveInspections(d) { setLS('visa_inspections', d); }
-function getAgents() { return getLS('visa_agents', []); }
-function saveAgents(d) { setLS('visa_agents', d); }
-function getConfig() { return getLS('visa_config', { licenca: true, semFisc: true }); }
-function saveConfig() {
-  setLS('visa_config', {
-    licenca: document.getElementById('togLicenca')?.checked,
-    semFisc: document.getElementById('togSemFisc')?.checked
-  });
-}
-
-// ═══════════════════════════════════════════════════════
-// NAVIGATION
-// ═══════════════════════════════════════════════════════
-const pageTitles = {
-  dashboard: 'Dashboard',
-  estabelecimentos: 'Estabelecimentos',
-  fiscalizacao: 'Fiscalizações',
-  relatorios: 'Relatórios',
-  configuracoes: 'Configurações'
+const _fbCache = {
+  inspections: {},
+  agents: [],
+  config: { licenca: true, semFisc: true },
+  custom: [],
+  deleted: [],
+  edited: {}
 };
 
-function navigate(page) {
-  currentPage = page;
+function _saveField(field, value) {
+  _STATE_REF.set({ [field]: value }, { merge: true })
+    .catch(e => console.error('Firestore write [' + field + ']:', e));
+}
+
+// ═══════════════════════════════════════════════════════
+// DATA ACCESSORS
+// ═══════════════════════════════════════════════════════
+function getInspections()  { return _fbCache.inspections; }
+function saveInspections(d){ _fbCache.inspections = d; _saveField('inspections', d); }
+function getAgents()       { return _fbCache.agents; }
+function saveAgents(d)     { _fbCache.agents = d; _saveField('agents', d); }
+function getConfig()       { return _fbCache.config; }
+function saveConfig() {
+  _fbCache.config = {
+    licenca: document.getElementById('togLicenca')?.checked ?? true,
+    semFisc: document.getElementById('togSemFisc')?.checked ?? true
+  };
+  _saveField('config', _fbCache.config);
+}
+function getCustom()      { return _fbCache.custom; }
+function saveCustom(d)    { _fbCache.custom = d; _saveField('custom', d); }
+function getDeletedIds()  { return _fbCache.deleted; }
+function saveDeletedIds(d){ _fbCache.deleted = d; _saveField('deleted', d); }
+function getEditedMap()   { return _fbCache.edited; }
+function saveEditedMap(d) { _fbCache.edited = d; _saveField('edited', d); }
+
+function insKey(id) { return String(id); }
+
+function getStatusFor(id) {
+  const recs = getInspections()[insKey(id)];
+  if (!recs || !recs.length) return 'pendente';
+  return recs[recs.length - 1].status;
+}
+
+function getLastInspection(id) {
+  const recs = getInspections()[insKey(id)];
+  if (!recs || !recs.length) return null;
+  return recs[recs.length - 1];
+}
+
+// ═══════════════════════════════════════════════════════
+// REBUILD DADOS
+// ═══════════════════════════════════════════════════════
+function rebuildDADOS() {
+  const deleted = getDeletedIds().map(String);
+  const edited  = getEditedMap();
+  const custom  = getCustom();
+  let base = _DADOS_ORIGINAL.filter(r => !deleted.includes(String(r.id)));
+  base = base.map(r => edited[String(r.id)] ? { ...r, ...edited[String(r.id)] } : r);
+  DADOS.length = 0;
+  [...base, ...custom].forEach(r => DADOS.push(r));
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function esc(s) {
+  if (s == null) return '';
+  return String(s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function formatDate(d) {
+  if (!d) return '—';
+  try {
+    const parts = d.toString().slice(0,10).split('-');
+    if (parts.length === 3) return parts[2]+'/'+parts[1]+'/'+parts[0];
+    const dt = new Date(d);
+    if (isNaN(dt)) return d;
+    return dt.toLocaleDateString('pt-BR');
+  } catch { return d; }
+}
+
+function daysUntil(d) {
+  const now  = new Date(); now.setHours(0,0,0,0);
+  const dt   = new Date(d + 'T00:00:00');
+  return Math.ceil((dt - now) / 86400000);
+}
+
+function showToast(msg, type = 'success') {
+  const c = document.getElementById('toastContainer');
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.innerHTML = (type === 'success' ? '✅' : '❌') + ' ' + msg;
+  c.appendChild(t);
+  setTimeout(() => {
+    t.style.animation = 'slideOut .3s ease forwards';
+    setTimeout(() => t.remove(), 300);
+  }, 3500);
+}
+
+function updateTopBadges() {
+  let f = 0;
+  DADOS.forEach(r => { if (getStatusFor(r.id) !== 'pendente') f++; });
+  document.getElementById('badgeTotal').textContent       = DADOS.length;
+  document.getElementById('badgeFiscalizado').textContent = f;
+}
+
+function riskBadge(r) {
+  if (!r) return '<span class="badge badge-sem">Não informado</span>';
+  if (r.includes('BAIXO')) return '<span class="badge badge-baixo">🟢 Baixo</span>';
+  if (r.includes('ALTO'))  return '<span class="badge badge-alto">🔴 Alto</span>';
+  return '<span class="badge badge-sem">'+esc(r)+'</span>';
+}
+
+function statusBadge(st) {
+  if (st === 'fiscalizado') return '<span class="badge badge-fiscalizado">✅ Fiscalizado</span>';
+  if (st === 'irregular')   return '<span class="badge badge-irregular">❌ Irregular</span>';
+  return '<span class="badge badge-pendente">⏳ Pendente</span>';
+}
+
+function statusLabel(st) {
+  if (st === 'fiscalizado') return 'Fiscalizado';
+  if (st === 'irregular')   return 'Irregular';
+  return 'Pendente';
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVEGAÇÃO
+// ═══════════════════════════════════════════════════════
+function navigate(pg) {
+  currentPage = pg;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const pageEl = document.getElementById('page-' + pg);
+  if (pageEl) pageEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.textContent.toLowerCase().includes(pageTitles[page].toLowerCase().slice(0,5))) n.classList.add('active');
+    n.classList.toggle('active', n.dataset.page === pg);
   });
-  document.getElementById('topbarTitle').textContent = pageTitles[page];
+  const titles = {
+    dashboard:'Dashboard', estabelecimentos:'Estabelecimentos',
+    fiscalizacao:'Fiscalizações', relatorios:'Relatórios', configuracoes:'Configurações'
+  };
+  document.getElementById('topbarTitle').textContent = titles[pg] || pg;
   closeSidebar();
-  if (page === 'dashboard') renderDashboard();
-  if (page === 'estabelecimentos') renderTable();
-  if (page === 'fiscalizacao') renderFiscalizacoes();
-  if (page === 'relatorios') gerarRelatorio();
-  if (page === 'configuracoes') renderConfig();
+  if (pg === 'dashboard')        renderDashboard();
+  if (pg === 'estabelecimentos') renderTable();
+  if (pg === 'fiscalizacao')     renderFiscalizacoes();
+  if (pg === 'relatorios')       gerarRelatorio();
+  if (pg === 'configuracoes')    renderConfig();
 }
 
 function toggleSidebar() {
@@ -918,32 +1248,19 @@ function closeSidebar() {
 }
 
 // ═══════════════════════════════════════════════════════
-// FILTERING
+// FILTROS
 // ═══════════════════════════════════════════════════════
-function getStatusFor(id) {
-  const ins = getInspections();
-  if (!ins[id] || ins[id].length === 0) return 'pendente';
-  return ins[id][ins[id].length - 1].status;
-}
-
-function getLastInspection(id) {
-  const ins = getInspections();
-  if (!ins[id] || ins[id].length === 0) return null;
-  return ins[id][ins[id].length - 1];
-}
-
 function filteredData() {
   const q = filters.q.toLowerCase().trim();
   return DADOS.filter(r => {
-    if (filters.bairro && r.bairro !== filters.bairro) return false;
-    if (filters.categoria && r.categoria !== filters.categoria) return false;
-    if (filters.risco && r.classe_risco !== filters.risco) return false;
-    if (filters.status) {
-      const st = getStatusFor(r.id);
-      if (filters.status !== st) return false;
-    }
+    if (filters.bairro    && r.bairro       !== filters.bairro)    return false;
+    if (filters.categoria && r.categoria    !== filters.categoria) return false;
+    if (filters.risco     && r.classe_risco !== filters.risco)     return false;
+    if (filters.status    && getStatusFor(r.id) !== filters.status) return false;
     if (q) {
-      const hay = [r.nome_fantasia, r.razao_social, r.endereco, r.tipo_atividade, r.cnae, r.categoria].join(' ').toLowerCase();
+      const hay = [r.nome_fantasia, r.razao_social, r.endereco,
+                   r.tipo_atividade, r.cnae, r.categoria, r.bairro]
+                  .map(v => v || '').join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
     return true;
@@ -953,21 +1270,17 @@ function filteredData() {
 function setFilter(type, val) {
   filters[type] = val;
   currentEstabPage = 1;
-  document.querySelectorAll('.filter-chip').forEach(c => {
-    c.classList.remove('active');
-    if (type === 'bairro') {
-      const chipVal = c.textContent.trim();
-      if (val === '' && chipVal === 'Todos os bairros') c.classList.add('active');
-      else if (val === chipVal) c.classList.add('active');
-    }
-  });
-  renderTable();
+  if (type === 'bairro') {
+    document.querySelectorAll('#page-estabelecimentos .filter-chip[data-bairro]').forEach(c => {
+      c.classList.toggle('active', c.dataset.bairro === val);
+    });
+  }
+  if (currentPage === 'estabelecimentos') renderTable();
 }
 
 function onFilterCategoria() { filters.categoria = document.getElementById('filterCategoria').value; currentEstabPage = 1; renderTable(); }
-function onFilterRisco() { filters.risco = document.getElementById('filterRisco').value; currentEstabPage = 1; renderTable(); }
-function onFilterStatus() { filters.status = document.getElementById('filterStatus').value; currentEstabPage = 1; renderTable(); }
-
+function onFilterRisco()     { filters.risco      = document.getElementById('filterRisco').value;     currentEstabPage = 1; renderTable(); }
+function onFilterStatus()    { filters.status     = document.getElementById('filterStatus').value;    currentEstabPage = 1; renderTable(); }
 function onSearch() {
   filters.q = document.getElementById('searchInput').value;
   currentEstabPage = 1;
@@ -982,32 +1295,25 @@ function clearSearch() {
 }
 
 // ═══════════════════════════════════════════════════════
-// TABLE RENDER
+// TABELA DE ESTABELECIMENTOS
 // ═══════════════════════════════════════════════════════
-function riskBadge(r) {
-  if (!r) return '<span class="badge badge-sem">Não informado</span>';
-  if (r.includes('BAIXO')) return '<span class="badge badge-baixo">🟢 Baixo</span>';
-  if (r.includes('ALTO')) return '<span class="badge badge-alto">🔴 Alto</span>';
-  return '<span class="badge badge-sem">' + r + '</span>';
-}
-function statusBadge(st) {
-  if (st === 'fiscalizado') return '<span class="badge badge-fiscalizado">✅ Fiscalizado</span>';
-  if (st === 'irregular') return '<span class="badge badge-irregular">❌ Irregular</span>';
-  return '<span class="badge badge-pendente">⏳ Pendente</span>';
-}
-
 function renderTable() {
-  const data = filteredData();
-  const total = data.length;
+  const data       = filteredData();
+  const total      = data.length;
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
   if (currentEstabPage > totalPages) currentEstabPage = totalPages;
   const slice = data.slice((currentEstabPage - 1) * PAGE_SIZE, currentEstabPage * PAGE_SIZE);
 
-  document.getElementById('resultCount').textContent = total + ' resultados';
+  document.getElementById('resultCount').textContent = total + ' resultado' + (total !== 1 ? 's' : '');
 
   const tbody = document.getElementById('tableBody');
   if (!slice.length) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div class="icon">🔍</div><h3>Nenhum resultado</h3><p>Tente outros termos ou filtros.</p></div></td></tr>';
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="icon">🔍</div>
+        <h3>Nenhum resultado</h3>
+        <p>Tente outros termos ou filtros.</p>
+      </div></td></tr>`;
   } else {
     tbody.innerHTML = slice.map(r => {
       const st = getStatusFor(r.id);
@@ -1016,204 +1322,170 @@ function renderTable() {
         <td><div class="td-razao">${esc(r.razao_social)}</div></td>
         <td><div class="td-end">${esc(r.endereco)}</div></td>
         <td><span class="badge badge-bairro">${esc(r.bairro)}</span></td>
-        <td>${r.categoria ? '<span class="badge badge-cat">' + esc(r.categoria) + '</span>' : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+        <td>${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>'
+                          : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
         <td>${riskBadge(r.classe_risco)}</td>
         <td>${statusBadge(st)}</td>
         <td><div class="td-actions">
-          <button class="action-btn view" title="Ver detalhes" onclick="openDetail(${r.id})">👁️</button>
-          <button class="action-btn inspect" title="Registrar fiscalização" onclick="openInspect(${r.id})">🔍</button>
-          <button class="action-btn edit" title="Editar estabelecimento" onclick="openEdit(${r.id})">✏️</button>
-          <button class="action-btn del" title="Excluir estabelecimento" onclick="deleteEstab(${r.id})">🗑️</button>
+          <button class="action-btn view"    onclick="openDetail(${r.id})"  title="Ver detalhes">👁️</button>
+          <button class="action-btn inspect" onclick="openInspect(${r.id})" title="Fiscalizar">🔍</button>
+          <button class="action-btn edit"    onclick="openEdit(${r.id})"    title="Editar">✏️</button>
+          <button class="action-btn del"     onclick="deleteEstab(${r.id})" title="Excluir">🗑️</button>
         </div></td>
       </tr>`;
     }).join('');
   }
 
-  // Pagination
   const info = document.getElementById('paginationInfo');
   const btns = document.getElementById('paginationBtns');
   const from = total === 0 ? 0 : (currentEstabPage - 1) * PAGE_SIZE + 1;
-  const to = Math.min(currentEstabPage * PAGE_SIZE, total);
+  const to   = Math.min(currentEstabPage * PAGE_SIZE, total);
   info.textContent = `Mostrando ${from}–${to} de ${total}`;
 
-  let bHtml = `<button class="page-btn" onclick="goPage(${currentEstabPage - 1})" ${currentEstabPage === 1 ? 'disabled' : ''}>‹</button>`;
-  const range = getPageRange(currentEstabPage, totalPages);
-  range.forEach(p => {
+  let bHtml = `<button class="page-btn" onclick="goPage(${currentEstabPage-1})" ${currentEstabPage===1?'disabled':''}>‹</button>`;
+  getPageRange(currentEstabPage, totalPages).forEach(p => {
     if (p === '...') bHtml += `<button class="page-btn" disabled>…</button>`;
-    else bHtml += `<button class="page-btn ${p === currentEstabPage ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
+    else bHtml += `<button class="page-btn ${p===currentEstabPage?'active':''}" onclick="goPage(${p})">${p}</button>`;
   });
-  bHtml += `<button class="page-btn" onclick="goPage(${currentEstabPage + 1})" ${currentEstabPage === totalPages ? 'disabled' : ''}>›</button>`;
+  bHtml += `<button class="page-btn" onclick="goPage(${currentEstabPage+1})" ${currentEstabPage===totalPages?'disabled':''}>›</button>`;
   btns.innerHTML = bHtml;
 }
 
 function getPageRange(cur, total) {
-  if (total <= 7) return Array.from({length: total}, (_, i) => i + 1);
-  if (cur <= 4) return [1, 2, 3, 4, 5, '...', total];
-  if (cur >= total - 3) return [1, '...', total-4, total-3, total-2, total-1, total];
-  return [1, '...', cur-1, cur, cur+1, '...', total];
+  if (total <= 7) return Array.from({length:total},(_,i)=>i+1);
+  if (cur <= 4)         return [1,2,3,4,5,'...',total];
+  if (cur >= total - 3) return [1,'...',total-4,total-3,total-2,total-1,total];
+  return [1,'...',cur-1,cur,cur+1,'...',total];
 }
 
 function goPage(p) {
-  const data = filteredData();
-  const tp = Math.max(1, Math.ceil(data.length / PAGE_SIZE));
+  const tp = Math.max(1, Math.ceil(filteredData().length / PAGE_SIZE));
   if (p < 1 || p > tp) return;
   currentEstabPage = p;
   renderTable();
-  window.scrollTo({top: 0, behavior: 'smooth'});
-}
-
-function esc(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  window.scrollTo({top:0,behavior:'smooth'});
 }
 
 // ═══════════════════════════════════════════════════════
-// DETAIL MODAL
+// MODAL DETALHES
 // ═══════════════════════════════════════════════════════
 function openDetail(id) {
   const r = DADOS.find(d => d.id === id);
   if (!r) return;
-  document.getElementById('detailNome').textContent = r.nome_fantasia;
-  const badges = document.getElementById('detailBadges');
   const st = getStatusFor(id);
-  badges.innerHTML = `<span class="badge badge-bairro">${esc(r.bairro)}</span>
-    ${r.categoria ? '<span class="badge badge-cat">' + esc(r.categoria) + '</span>' : ''}
-    ${riskBadge(r.classe_risco)}
-    ${statusBadge(st)}`;
-
+  document.getElementById('detailNome').textContent = r.nome_fantasia;
+  document.getElementById('detailBadges').innerHTML =
+    `<span class="badge badge-bairro">${esc(r.bairro)}</span>
+     ${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>' : ''}
+     ${riskBadge(r.classe_risco)}
+     ${statusBadge(st)}`;
   document.getElementById('detailInfo').innerHTML = `
-    <div class="info-item">
-      <label>Razão Social</label>
-      <p>${esc(r.razao_social) || '—'}</p>
-    </div>
-    <div class="info-item">
-      <label>Endereço</label>
-      <p>${esc(r.endereco) || '—'}</p>
-    </div>
-    <div class="info-item">
-      <label>Tipo de Atividade</label>
-      <p>${esc(r.tipo_atividade) || '—'}</p>
-    </div>
-    <div class="info-item">
-      <label>Último Licenciamento</label>
-      <p>${formatDate(r.ultimo_licenciamento)}</p>
-    </div>
-    <div class="info-item">
-      <label>Órgão Licenciador</label>
-      <p>${esc(r.orgao_licenciador) || '—'}</p>
-    </div>
-    <div class="info-item">
-      <label>CNAE</label>
-      <p>${esc(r.cnae) || '—'}</p>
-    </div>
+    <div class="info-item"><label>Razão Social</label><p>${esc(r.razao_social)||'—'}</p></div>
+    <div class="info-item"><label>Endereço</label><p>${esc(r.endereco)||'—'}</p></div>
+    <div class="info-item"><label>Tipo de Atividade</label><p>${esc(r.tipo_atividade)||'—'}</p></div>
+    <div class="info-item"><label>Último Licenciamento</label><p>${formatDate(r.ultimo_licenciamento)}</p></div>
+    <div class="info-item"><label>Órgão Licenciador</label><p>${esc(r.orgao_licenciador)||'—'}</p></div>
+    <div class="info-item"><label>CNAE</label><p>${esc(r.cnae)||'—'}</p></div>
   `;
-
+  const recs = (getInspections()[insKey(id)] || []).slice().reverse();
   const hist = document.getElementById('detailHistory');
-  const ins = getInspections();
-  const recs = (ins[id] || []).slice().reverse();
   if (!recs.length) {
-    hist.innerHTML = '<div class="empty-state" style="padding:24px"><div class="icon" style="font-size:32px">📋</div><p>Nenhuma fiscalização registrada ainda.</p></div>';
+    hist.innerHTML = '<div class="empty-state" style="padding:24px"><div class="icon" style="font-size:32px">📋</div><p>Nenhuma fiscalização registrada.</p></div>';
   } else {
     hist.innerHTML = recs.map(rec => `
       <div class="history-item ${rec.status}">
         <div class="history-date">${formatDate(rec.date)} <span class="history-status">${statusBadge(rec.status)}</span></div>
         <div class="history-agent">👤 ${esc(rec.agent)}</div>
-        ${rec.obs ? '<div class="history-obs">' + esc(rec.obs) + '</div>' : ''}
-      </div>
-    `).join('');
+        ${rec.obs ? '<div class="history-obs">'+esc(rec.obs)+'</div>' : ''}
+      </div>`).join('');
   }
-
   openModal('modalDetail');
 }
 
 // ═══════════════════════════════════════════════════════
-// INSPECT MODAL
+// MODAL FISCALIZAR
 // ═══════════════════════════════════════════════════════
 function openInspect(id) {
   const r = DADOS.find(d => d.id === id);
   currentInspectId = id;
   document.getElementById('inspectNomeLabel').textContent = r ? r.nome_fantasia : '—';
-  document.getElementById('inspDate').value = new Date().toISOString().slice(0, 10);
+  document.getElementById('inspDate').value   = new Date().toISOString().slice(0,10);
   document.getElementById('inspStatus').value = 'fiscalizado';
-  document.getElementById('inspObs').value = '';
-  
-  const agentSel = document.getElementById('inspAgent');
+  document.getElementById('inspObs').value    = '';
   const agents = getAgents();
-  agentSel.innerHTML = '<option value="">Selecionar agente...</option>' + agents.map(a => `<option>${esc(a.name)}</option>`).join('');
-  
+  const sel    = document.getElementById('inspAgent');
+  if (!agents.length) {
+    sel.innerHTML = '<option value="">⚠️ Cadastre agentes em Configurações</option>';
+  } else {
+    sel.innerHTML = '<option value="">Selecionar agente...</option>' +
+      agents.map(a => `<option value="${esc(a.name)}">${esc(a.name)}${a.role?' — '+esc(a.role):''}</option>`).join('');
+  }
   openModal('modalInspect');
 }
 
 function saveInspection() {
-  const date = document.getElementById('inspDate').value;
-  const agent = document.getElementById('inspAgent').value;
+  const date   = document.getElementById('inspDate').value;
+  const agent  = document.getElementById('inspAgent').value;
   const status = document.getElementById('inspStatus').value;
-  const obs = document.getElementById('inspObs').value;
-  
-  if (!date || !agent) { showToast('Preencha data e agente!', 'error'); return; }
-  
+  const obs    = document.getElementById('inspObs').value.trim();
+  if (!date)  { showToast('Informe a data da vistoria!','error'); return; }
+  if (!agent) { showToast('Selecione o agente fiscal!','error'); return; }
   const ins = getInspections();
-  if (!ins[currentInspectId]) ins[currentInspectId] = [];
-  ins[currentInspectId].push({ date, agent, status, obs, savedAt: new Date().toISOString() });
+  const key = insKey(currentInspectId);
+  if (!ins[key]) ins[key] = [];
+  ins[key].push({ date, agent, status, obs, savedAt: new Date().toISOString() });
   saveInspections(ins);
-  
   closeModal('modalInspect');
+  showToast('Fiscalização registrada! ✅','success');
   updateTopBadges();
-  showToast('Fiscalização registrada com sucesso! ✅', 'success');
-  
   if (currentPage === 'estabelecimentos') renderTable();
-  if (currentPage === 'fiscalizacao') renderFiscalizacoes();
-  if (currentPage === 'dashboard') renderDashboard();
+  if (currentPage === 'fiscalizacao')     renderFiscalizacoes();
+  if (currentPage === 'dashboard')        renderDashboard();
 }
 
 // ═══════════════════════════════════════════════════════
-// FISCALIZAÇÕES PAGE
+// PÁGINA FISCALIZAÇÕES
 // ═══════════════════════════════════════════════════════
 function setFiscFilter(v) {
   fiscFilter = v;
   document.querySelectorAll('#page-fiscalizacao .filter-chip').forEach(c => {
-    c.classList.remove('active');
-    const map = {'': 'Todos', fiscalizado: 'Fiscalizado', pendente: 'Pendente', irregular: 'Irregular'};
-    if (c.textContent.includes(map[v])) c.classList.add('active');
+    const map = { '':'Todos', fiscalizado:'Fiscalizado', pendente:'Pendente', irregular:'Irregular' };
+    c.classList.toggle('active', c.textContent.trim().includes(map[v]||''));
   });
   renderFiscalizacoes();
 }
 
 function renderFiscalizacoes() {
   const ins = getInspections();
-  const q = document.getElementById('searchFisc')?.value.toLowerCase().trim() || '';
-  let rows = [];
-  Object.entries(ins).forEach(([id, recs]) => {
-    const estab = DADOS.find(d => d.id === parseInt(id));
-    recs.forEach(rec => {
-      rows.push({ estab, rec, id: parseInt(id) });
-    });
+  const q   = (document.getElementById('searchFisc')?.value||'').toLowerCase().trim();
+  let rows  = [];
+  Object.entries(ins).forEach(([key, recs]) => {
+    const numId = Number(key);
+    const estab = DADOS.find(d => d.id === numId) || null;
+    recs.forEach(rec => rows.push({ estab, rec, id: numId }));
   });
   if (fiscFilter) rows = rows.filter(r => r.rec.status === fiscFilter);
   if (q) rows = rows.filter(r => {
-    const hay = [(r.estab?.nome_fantasia || ''), (r.rec.agent || ''), (r.estab?.bairro || ''), (r.rec.obs || '')].join(' ').toLowerCase();
+    const hay = [r.estab?.nome_fantasia||'', r.rec.agent||'', r.estab?.bairro||'', r.rec.obs||''].join(' ').toLowerCase();
     return hay.includes(q);
   });
-  rows.sort((a, b) => b.rec.date.localeCompare(a.rec.date));
-
-  document.getElementById('fiscCount').textContent = rows.length + ' registros';
-  
+  rows.sort((a,b) => (b.rec.date||'').localeCompare(a.rec.date||''));
+  document.getElementById('fiscCount').textContent = rows.length + ' registro'+(rows.length!==1?'s':'');
   const tbody = document.getElementById('fiscTableBody');
   const empty = document.getElementById('fiscEmpty');
-  
   if (!rows.length) {
     tbody.innerHTML = '';
     empty.style.display = 'block';
   } else {
     empty.style.display = 'none';
-    tbody.innerHTML = rows.map(({estab, rec, id}) => `<tr>
-      <td><div class="td-nome">${esc(estab?.nome_fantasia || 'ID ' + id)}</div></td>
-      <td><span class="badge badge-bairro">${esc(estab?.bairro || '—')}</span></td>
+    tbody.innerHTML = rows.map(({estab,rec,id}) => `<tr>
+      <td><div class="td-nome">${esc(estab?.nome_fantasia||'ID '+id)}</div></td>
+      <td><span class="badge badge-bairro">${esc(estab?.bairro||'—')}</span></td>
       <td>${formatDate(rec.date)}</td>
       <td>👤 ${esc(rec.agent)}</td>
       <td>${statusBadge(rec.status)}</td>
-      <td style="max-width:200px;font-size:12px;color:var(--text-light)">${esc(rec.obs) || '—'}</td>
-      <td><button class="action-btn view" onclick="openDetail(${id})">👁️</button></td>
+      <td style="max-width:200px;font-size:12px;color:var(--text-light)">${esc(rec.obs)||'—'}</td>
+      <td><button class="action-btn view" onclick="openDetail(${id})" title="Ver detalhes">👁️</button></td>
     </tr>`).join('');
   }
 }
@@ -1222,84 +1494,83 @@ function renderFiscalizacoes() {
 // DASHBOARD
 // ═══════════════════════════════════════════════════════
 function renderDashboard() {
-  const ins = getInspections();
-  let fiscTotal = 0, regTotal = 0, irregTotal = 0;
+  let fiscTotal=0, regTotal=0;
   DADOS.forEach(r => {
     const st = getStatusFor(r.id);
     if (st !== 'pendente') fiscTotal++;
     if (st === 'fiscalizado') regTotal++;
-    if (st === 'irregular') irregTotal++;
   });
-
-  document.getElementById('statTotal').textContent = DADOS.length;
+  document.getElementById('statTotal').textContent       = DADOS.length;
   document.getElementById('statFiscalizado').textContent = fiscTotal;
-  document.getElementById('statRegular').textContent = regTotal;
-  document.getElementById('statPendente').textContent = DADOS.length - fiscTotal;
+  document.getElementById('statRegular').textContent     = regTotal;
+  document.getElementById('statPendente').textContent    = DADOS.length - fiscTotal;
   updateTopBadges();
 
-  // Bairro chart
+  // Bairros
   const bairros = {};
-  DADOS.forEach(r => { bairros[r.bairro] = (bairros[r.bairro] || 0) + 1; });
-  const bMax = Math.max(...Object.values(bairros));
-  document.getElementById('bairroChart').innerHTML = Object.entries(bairros).sort((a,b) => b[1]-a[1]).map(([name, cnt]) => `
-    <div class="bar-item">
-      <div class="bar-label"><span>${name}</span><span>${cnt}</span></div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(cnt/bMax*100).toFixed(1)}%"></div></div>
-    </div>`).join('');
+  DADOS.forEach(r => { const k=r.bairro||'Não informado'; bairros[k]=(bairros[k]||0)+1; });
+  const bMax = Math.max(1,...Object.values(bairros));
+  document.getElementById('bairroChart').innerHTML =
+    Object.entries(bairros).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>`
+      <div class="bar-item">
+        <div class="bar-label"><span>${esc(name)}</span><span>${cnt}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(cnt/bMax*100).toFixed(1)}%"></div></div>
+      </div>`).join('');
 
-  // Risco chart
-  const riscos = { 'BAIXO RISCO': 0, 'ALTO RISCO': 0, 'Não informado': 0 };
+  // Risco
+  const riscos = {'BAIXO RISCO':0,'ALTO RISCO':0,'Não informado':0};
   DADOS.forEach(r => {
-    if (r.classe_risco === 'BAIXO RISCO') riscos['BAIXO RISCO']++;
-    else if (r.classe_risco === 'ALTO RISCO') riscos['ALTO RISCO']++;
-    else riscos['Não informado']++;
+    if      (r.classe_risco==='BAIXO RISCO') riscos['BAIXO RISCO']++;
+    else if (r.classe_risco==='ALTO RISCO')  riscos['ALTO RISCO']++;
+    else                                      riscos['Não informado']++;
   });
   const rColors = {'BAIXO RISCO':'#6bcb8b','ALTO RISCO':'#e05a6b','Não informado':'#ddc5cc'};
-  document.getElementById('riscoChart').innerHTML = Object.entries(riscos).map(([name, cnt]) => `
-    <div class="pie-row"><div class="pie-dot" style="background:${rColors[name]}"></div><div class="pie-name">${name}</div><div class="pie-val">${cnt}</div></div>`).join('');
+  document.getElementById('riscoChart').innerHTML =
+    Object.entries(riscos).map(([name,cnt])=>
+      `<div class="pie-row"><div class="pie-dot" style="background:${rColors[name]}"></div>
+       <div class="pie-name">${name}</div><div class="pie-val">${cnt}</div></div>`).join('');
 
-  // Category chart
+  // Categorias Top 8
   const cats = {};
-  DADOS.forEach(r => { if (r.categoria) cats[r.categoria] = (cats[r.categoria] || 0) + 1; });
-  const topCats = Object.entries(cats).sort((a,b) => b[1]-a[1]).slice(0, 8);
-  const cMax = topCats[0]?.[1] || 1;
-  document.getElementById('catChart').innerHTML = topCats.map(([name, cnt]) => `
-    <div class="bar-item">
-      <div class="bar-label"><span style="font-size:12px">${name}</span><span>${cnt}</span></div>
-      <div class="bar-track"><div class="bar-fill" style="width:${(cnt/cMax*100).toFixed(1)}%"></div></div>
-    </div>`).join('');
+  DADOS.forEach(r => { if(r.categoria) cats[r.categoria]=(cats[r.categoria]||0)+1; });
+  const topCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  const cMax = topCats[0]?.[1]||1;
+  document.getElementById('catChart').innerHTML =
+    topCats.length ? topCats.map(([name,cnt])=>`
+      <div class="bar-item">
+        <div class="bar-label"><span style="font-size:12px">${esc(name)}</span><span>${cnt}</span></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${(cnt/cMax*100).toFixed(1)}%"></div></div>
+      </div>`).join('')
+    : '<div style="color:var(--text-muted);font-size:13px;padding:10px">Nenhuma categoria cadastrada.</div>';
 
-  // Vencimentos próximos (dentro de 60 dias)
-  const now = new Date();
-  const future = new Date(); future.setDate(future.getDate() + 60);
+  // Vencimentos próximos 60d
+  const now=new Date(); now.setHours(0,0,0,0);
+  const future=new Date(); future.setDate(future.getDate()+60);
   const soon = DADOS.filter(r => {
     if (!r.ultimo_licenciamento) return false;
-    const d = new Date(r.ultimo_licenciamento);
-    return d >= now && d <= future;
-  }).sort((a, b) => new Date(a.ultimo_licenciamento) - new Date(b.ultimo_licenciamento)).slice(0, 5);
+    const d = new Date(r.ultimo_licenciamento+'T00:00:00');
+    return d>=now && d<=future;
+  }).sort((a,b)=>a.ultimo_licenciamento.localeCompare(b.ultimo_licenciamento)).slice(0,5);
 
-  const vList = document.getElementById('vencimentoList');
-  if (!soon.length) {
-    vList.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">Nenhum vencimento nos próximos 60 dias</div>';
-  } else {
-    vList.innerHTML = soon.map(r => `
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
-        <div>
-          <div style="font-weight:600;font-size:13px">${esc(r.nome_fantasia)}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${esc(r.bairro)}</div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:13px;font-weight:700;color:var(--warning)">${formatDate(r.ultimo_licenciamento)}</div>
-          <div style="font-size:11px;color:var(--text-muted)">${daysUntil(r.ultimo_licenciamento)} dias</div>
-        </div>
-      </div>`).join('');
-  }
+  document.getElementById('vencimentoList').innerHTML = soon.length
+    ? soon.map(r=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)">
+          <div>
+            <div style="font-weight:600;font-size:13px">${esc(r.nome_fantasia)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${esc(r.bairro)}</div>
+          </div>
+          <div style="text-align:right">
+            <div style="font-size:13px;font-weight:700;color:var(--warning)">${formatDate(r.ultimo_licenciamento)}</div>
+            <div style="font-size:11px;color:var(--text-muted)">${daysUntil(r.ultimo_licenciamento)} dias</div>
+          </div>
+        </div>`).join('')
+    : '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">Nenhum vencimento nos próximos 60 dias</div>';
 
   // Alert strip
-  const alertEl = document.getElementById('alertStrip');
+  const alertEl  = document.getElementById('alertStrip');
   const pendCount = DADOS.length - fiscTotal;
   if (pendCount > 0 && getConfig().semFisc) {
-    alertEl.innerHTML = `<div class="alert-strip">⚠️ <strong>${pendCount} estabelecimentos</strong> ainda não foram fiscalizados. <button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="navigate('estabelecimentos');setFilter('status','pendente')">Ver pendentes</button></div>`;
+    alertEl.innerHTML = `<div class="alert-strip">⚠️ <strong>${pendCount} estabelecimento${pendCount!==1?'s':''}</strong> ainda não foi${pendCount!==1?'ram':''} fiscalizado${pendCount!==1?'s':''}. <button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="navigate('estabelecimentos');setFilter('status','pendente')">Ver pendentes</button></div>`;
   } else {
     alertEl.innerHTML = '';
   }
@@ -1311,45 +1582,366 @@ function renderDashboard() {
 function gerarRelatorio() {
   const bairro = document.getElementById('relBairro')?.value || '';
   const status = document.getElementById('relStatus')?.value || '';
-  const risco = document.getElementById('relRisco')?.value || '';
+  const risco  = document.getElementById('relRisco')?.value  || '';
 
   relResultados = DADOS.filter(r => {
-    if (bairro && r.bairro !== bairro) return false;
-    if (risco && r.classe_risco !== risco) return false;
-    if (status) { if (getStatusFor(r.id) !== status) return false; }
+    if (bairro && r.bairro       !== bairro) return false;
+    if (risco  && r.classe_risco !== risco)  return false;
+    if (status && getStatusFor(r.id) !== status) return false;
     return true;
   });
 
-  document.getElementById('relCount').textContent = relResultados.length + ' resultados';
+  document.getElementById('relCount').textContent = relResultados.length+' resultado'+(relResultados.length!==1?'s':'');
   const tbody = document.getElementById('relTableBody');
-  tbody.innerHTML = relResultados.map((r, i) => {
-    const st = getStatusFor(r.id);
-    const last = getLastInspection(r.id);
-    return `<tr>
-      <td>${i + 1}</td>
-      <td><div class="td-nome">${esc(r.nome_fantasia)}</div></td>
-      <td><div class="td-razao">${esc(r.razao_social)}</div></td>
-      <td><span class="badge badge-bairro">${esc(r.bairro)}</span></td>
-      <td style="font-size:12px">${esc(r.categoria) || '—'}</td>
-      <td style="font-size:12px;max-width:140px">${esc(r.tipo_atividade) || '—'}</td>
-      <td>${riskBadge(r.classe_risco)}</td>
-      <td>${statusBadge(st)}</td>
-      <td style="font-size:12px">${last ? formatDate(last.date) : '—'}</td>
-      <td style="font-size:12px">${last ? esc(last.agent) : '—'}</td>
-    </tr>`;
-  }).join('');
+  tbody.innerHTML = relResultados.length
+    ? relResultados.map((r,i) => {
+        const st   = getStatusFor(r.id);
+        const last = getLastInspection(r.id);
+        return `<tr>
+          <td>${i+1}</td>
+          <td><div class="td-nome">${esc(r.nome_fantasia)}</div></td>
+          <td><div class="td-razao">${esc(r.razao_social)}</div></td>
+          <td><span class="badge badge-bairro">${esc(r.bairro)}</span></td>
+          <td style="font-size:12px">${esc(r.categoria)||'—'}</td>
+          <td style="font-size:12px;max-width:140px">${esc(r.tipo_atividade)||'—'}</td>
+          <td>${riskBadge(r.classe_risco)}</td>
+          <td>${statusBadge(st)}</td>
+          <td style="font-size:12px">${last?formatDate(last.date):'—'}</td>
+          <td style="font-size:12px">${last?esc(last.agent):'—'}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="10"><div class="empty-state"><div class="icon">📊</div><h3>Nenhum resultado</h3><p>Ajuste os filtros e clique em Gerar.</p></div></td></tr>';
 }
 
-function exportRelCSV() {
-  if (!relResultados.length) { showToast('Gere um relatório primeiro', 'error'); return; }
-  exportToCSV(relResultados, 'relatorio_visa_careiro.csv');
+// ─── RELATÓRIO PARA IMPRESSÃO ─────────────────────────
+
+// ─── PRINT HELPER ─────────────────────────────────────
+function _openPrintWindow(title, subtitle, htmlContent) {
+  document.getElementById('printModalTitle').textContent = '\uD83D\uDDA8\uFE0F ' + title;
+  document.getElementById('printModalSub').textContent   = subtitle;
+  document.getElementById('printContent').innerHTML      = htmlContent;
+  openModal('printPreviewModal');
+}
+
+function _printStyles() {
+  return `* { box-sizing:border-box; margin:0; padding:0; }
+body { font-family:'DM Sans',sans-serif; color:#1a1a2e; background:#fff; padding:20px; }
+.print-header { background:#f48aab; color:white; padding:28px 32px; display:flex; align-items:flex-start; justify-content:space-between; border-radius:12px 12px 0 0; }
+.print-header h1 { font-family:'Playfair Display',serif; font-size:22px; }
+.print-meta { font-size:12px; opacity:.9; text-align:right; }
+.print-body { padding:24px 32px; }
+.print-section-title { font-family:'Playfair Display',serif; font-size:15px; border-bottom:2px solid #f48aab; padding-bottom:6px; margin:20px 0 12px; color:#f48aab; }
+.print-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-bottom:24px; }
+.print-stat { background:#fde8ee; border:1px solid #f5c6d4; border-radius:10px; padding:14px; text-align:center; }
+.pv { font-family:'Playfair Display',serif; font-size:28px; font-weight:900; color:#f48aab; }
+.pl { font-size:11px; color:#b08090; font-weight:600; text-transform:uppercase; letter-spacing:.5px; }
+table { width:100%; border-collapse:collapse; font-size:11.5px; }
+thead tr { background:#f48aab; color:white; }
+th { padding:9px 10px; text-align:left; font-weight:700; font-size:10.5px; letter-spacing:.5px; text-transform:uppercase; }
+td { padding:7px 10px; border-bottom:1px solid #fae8f0; }
+tr:nth-child(even) td { background:#fff5f8; }
+.print-footer { margin-top:32px; display:grid; grid-template-columns:1fr 1fr; gap:32px; border-top:2px solid #eee; padding-top:24px; }
+.sign-line { border-top:1.5px solid #333; margin-top:40px; padding-top:6px; font-size:11px; color:#555; text-align:center; }
+@media print { body { padding:0; } @page { margin:15mm; } }`;
+}
+
+// ─── IMPRIMIR ESTABELECIMENTOS ────────────────────────
+function imprimirEstabelecimentos() {
+  const data = filteredData();
+  if (!data.length) { showToast('Nenhum estabelecimento para imprimir!','error'); return; }
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR');
+  const timeStr = now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let cFisc=0, cPend=0, cIrreg=0;
+  data.forEach(r => {
+    const st = getStatusFor(r.id);
+    if (st==='fiscalizado') cFisc++; else if (st==='irregular') cIrreg++; else cPend++;
+  });
+  const bairroAtivo = filters.bairro||'Todos';
+  const catAtiva    = filters.categoria||'Todas';
+  const riscoAtivo  = filters.risco||'Todos';
+  const statusAtivo = filters.status||'Todos';
+  const rows = data.map((r,i) => {
+    const st   = getStatusFor(r.id);
+    const last = getLastInspection(r.id);
+    const stTxt   = {fiscalizado:'Fiscalizado',pendente:'Pendente',irregular:'Irregular'}[st]||st;
+    const stColor = {fiscalizado:'#2a6e47',pendente:'#7a4e00',irregular:'#c0392b'}[st]||'#333';
+    const stBg    = {fiscalizado:'#e8f8ee',pendente:'#fff4e0',irregular:'#fdeef0'}[st]||'#f5f5f5';
+    return `<tr>
+      <td style="text-align:center;font-weight:600">${i+1}</td>
+      <td style="font-weight:600">${esc(r.nome_fantasia)}</td>
+      <td style="font-size:11px;color:#555">${esc(r.razao_social)||'&mdash;'}</td>
+      <td>${esc(r.bairro)||'&mdash;'}</td>
+      <td style="font-size:11px">${esc(r.categoria)||'&mdash;'}</td>
+      <td style="font-size:11px">${r.classe_risco?.includes('BAIXO')?'Baixo':r.classe_risco?.includes('ALTO')?'Alto':'&mdash;'}</td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:700;background:${stBg};color:${stColor}">${stTxt}</span></td>
+      <td style="font-size:11px">${last?formatDate(last.date):'&mdash;'}</td>
+    </tr>`;
+  }).join('');
+  const html = `
+    <div class="print-header">
+      <div>
+        <div style="font-size:12px;opacity:.85;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div>
+        <h1>VISA Careiro</h1>
+        <div style="font-size:13px;opacity:.9;margin-top:4px">Vigilância Sanitária — Lista de Estabelecimentos</div>
+      </div>
+      <div class="print-meta"><div style="font-size:18px;margin-bottom:4px">🏥</div><div><strong>Data:</strong> ${dateStr}</div><div><strong>Hora:</strong> ${timeStr}</div></div>
+    </div>
+    <div class="print-body">
+      <div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#555">
+        <strong style="color:#333">Filtros:</strong>
+        Bairro: <strong>${bairroAtivo}</strong> | Categoria: <strong>${catAtiva}</strong> | Risco: <strong>${riscoAtivo}</strong> | Status: <strong>${statusAtivo}</strong>
+      </div>
+      <div class="print-section-title">📊 Resumo</div>
+      <div class="print-summary">
+        <div class="print-stat"><div class="pv">${data.length}</div><div class="pl">Total</div></div>
+        <div class="print-stat"><div class="pv" style="color:#2a6e47">${cFisc}</div><div class="pl">Fiscalizados</div></div>
+        <div class="print-stat"><div class="pv" style="color:#c0392b">${cIrreg}</div><div class="pl">Irregulares</div></div>
+        <div class="print-stat"><div class="pv" style="color:#7a4e00">${cPend}</div><div class="pl">Pendentes</div></div>
+      </div>
+      <div class="print-section-title">🏪 Estabelecimentos</div>
+      <table>
+        <thead><tr><th style="width:32px">#</th><th>Nome Fantasia</th><th>Razão Social</th><th>Bairro</th><th>Categoria</th><th>Risco</th><th>Status</th><th>Últ. Vistoria</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div class="print-footer">
+        <div><div style="font-size:12px;color:#555;margin-bottom:32px">Responsável pela Emissão:</div><div class="sign-line">Chefe da Vigilância Sanitária Municipal</div></div>
+        <div><div style="font-size:12px;color:#555;margin-bottom:32px">Servidor Responsável:</div><div class="sign-line">Agente / Fiscal Sanitário</div></div>
+      </div>
+      <div style="margin-top:24px;padding:12px;background:#f9f9f9;border-radius:8px;font-size:11px;color:#888;text-align:center">VISA Careiro — ${dateStr} às ${timeStr} — ${data.length} estabelecimentos</div>
+    </div>`;
+  _openPrintWindow('Lista de Estabelecimentos', data.length + ' estabelecimentos', html);
+}
+
+// ─── IMPRIMIR FISCALIZAÇÕES ───────────────────────────
+function imprimirFiscalizacoes() {
+  const ins = getInspections();
+  const q   = (document.getElementById('searchFisc')?.value||'').toLowerCase().trim();
+  let rows  = [];
+  Object.entries(ins).forEach(([key,recs]) => {
+    const numId = Number(key);
+    const estab = DADOS.find(d => d.id === numId)||null;
+    recs.forEach(rec => rows.push({estab,rec,id:numId}));
+  });
+  if (fiscFilter) rows = rows.filter(r => r.rec.status === fiscFilter);
+  if (q) rows = rows.filter(r => {
+    const hay = [r.estab?.nome_fantasia||'',r.rec.agent||'',r.estab?.bairro||'',r.rec.obs||''].join(' ').toLowerCase();
+    return hay.includes(q);
+  });
+  rows.sort((a,b)=>(b.rec.date||'').localeCompare(a.rec.date||''));
+  if (!rows.length) { showToast('Nenhuma fiscalização para imprimir!','error'); return; }
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('pt-BR');
+  const timeStr = now.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+  let cFisc=0, cPend=0, cIrreg=0;
+  rows.forEach(r => {
+    if (r.rec.status==='fiscalizado') cFisc++;
+    else if (r.rec.status==='irregular') cIrreg++;
+    else cPend++;
+  });
+  const tableRows = rows.map((item,i) => {
+    const {estab,rec,id} = item;
+    const stTxt   = {fiscalizado:'Fiscalizado',pendente:'Pendente',irregular:'Irregular'}[rec.status]||rec.status;
+    const stColor = {fiscalizado:'#2a6e47',pendente:'#7a4e00',irregular:'#c0392b'}[rec.status]||'#333';
+    const stBg    = {fiscalizado:'#e8f8ee',pendente:'#fff4e0',irregular:'#fdeef0'}[rec.status]||'#f5f5f5';
+    return `<tr>
+      <td style="text-align:center;font-weight:600">${i+1}</td>
+      <td style="font-weight:600">${esc(estab?.nome_fantasia||'ID '+id)}</td>
+      <td>${esc(estab?.bairro||'&mdash;')}</td>
+      <td>${formatDate(rec.date)}</td>
+      <td>${esc(rec.agent)}</td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:700;background:${stBg};color:${stColor}">${stTxt}</span></td>
+      <td style="font-size:10px;max-width:160px">${esc(rec.obs)||'&mdash;'}</td>
+    </tr>`;
+  }).join('');
+  const filterLabel = fiscFilter ? {fiscalizado:'Fiscalizado',pendente:'Pendente',irregular:'Irregular'}[fiscFilter] : 'Todos';
+  const html = `
+    <div class="print-header">
+      <div>
+        <div style="font-size:12px;opacity:.85;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div>
+        <h1>VISA Careiro</h1>
+        <div style="font-size:13px;opacity:.9;margin-top:4px">Vigilância Sanitária — Registro de Fiscalizações</div>
+      </div>
+      <div class="print-meta"><div style="font-size:18px;margin-bottom:4px">🔍</div><div><strong>Data:</strong> ${dateStr}</div><div><strong>Hora:</strong> ${timeStr}</div></div>
+    </div>
+    <div class="print-body">
+      <div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#555">
+        <strong style="color:#333">Filtro de status:</strong> <strong>${filterLabel}</strong>${q?' | Busca: <strong>"'+q+'"</strong>':''}
+      </div>
+      <div class="print-section-title">📊 Resumo</div>
+      <div class="print-summary">
+        <div class="print-stat"><div class="pv">${rows.length}</div><div class="pl">Total</div></div>
+        <div class="print-stat"><div class="pv" style="color:#2a6e47">${cFisc}</div><div class="pl">Fiscalizados</div></div>
+        <div class="print-stat"><div class="pv" style="color:#c0392b">${cIrreg}</div><div class="pl">Irregulares</div></div>
+        <div class="print-stat"><div class="pv" style="color:#7a4e00">${cPend}</div><div class="pl">Pendentes</div></div>
+      </div>
+      <div class="print-section-title">📋 Fiscalizações</div>
+      <table>
+        <thead><tr><th style="width:32px">#</th><th>Estabelecimento</th><th>Bairro</th><th>Data</th><th>Agente</th><th>Status</th><th>Observação</th></tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+      <div class="print-footer">
+        <div><div style="font-size:12px;color:#555;margin-bottom:32px">Responsável pela Emissão:</div><div class="sign-line">Chefe da Vigilância Sanitária Municipal</div></div>
+        <div><div style="font-size:12px;color:#555;margin-bottom:32px">Servidor Responsável:</div><div class="sign-line">Agente / Fiscal Sanitário</div></div>
+      </div>
+      <div style="margin-top:24px;padding:12px;background:#f9f9f9;border-radius:8px;font-size:11px;color:#888;text-align:center">VISA Careiro — ${dateStr} às ${timeStr} — ${rows.length} registros</div>
+    </div>`;
+  _openPrintWindow('Fiscalizações', rows.length + ' registros', html);
+}
+
+function abrirRelatorioImpressao() {
+  if (!relResultados.length) { showToast('Gere um relatório primeiro!','error'); return; }
+
+  const now      = new Date();
+  const dateStr  = now.toLocaleDateString('pt-BR');
+  const timeStr  = now.toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+
+  const bairroVal = document.getElementById('relBairro')?.value || 'Todos';
+  const statusVal = document.getElementById('relStatus')?.value || 'Todos';
+  const riscoVal  = document.getElementById('relRisco')?.value  || 'Todos';
+
+  // Estatísticas do resultado
+  let cFisc=0, cPend=0, cIrreg=0, cBaixo=0, cAlto=0;
+  relResultados.forEach(r => {
+    const st = getStatusFor(r.id);
+    if (st==='fiscalizado') cFisc++;
+    else if (st==='irregular') cIrreg++;
+    else cPend++;
+    if (r.classe_risco==='BAIXO RISCO') cBaixo++;
+    else if (r.classe_risco==='ALTO RISCO') cAlto++;
+  });
+
+  const statusText = { fiscalizado:'✅ Fiscalizado', pendente:'⏳ Pendente', irregular:'❌ Irregular', '':'Todos' };
+  const riscoText  = { 'BAIXO RISCO':'🟢 Baixo Risco', 'ALTO RISCO':'🔴 Alto Risco', '':'Todos' };
+
+  const rows = relResultados.map((r,i) => {
+    const st   = getStatusFor(r.id);
+    const last = getLastInspection(r.id);
+    const stTxt = { fiscalizado:'Fiscalizado', pendente:'Pendente', irregular:'Irregular' }[st] || st;
+    const stColor = { fiscalizado:'#2a6e47', pendente:'#7a4e00', irregular:'#c0392b' }[st] || '#333';
+    return `<tr>
+      <td style="text-align:center;font-weight:600">${i+1}</td>
+      <td style="font-weight:600">${esc(r.nome_fantasia)}</td>
+      <td style="font-size:11px;color:#555">${esc(r.razao_social)||'—'}</td>
+      <td>${esc(r.bairro)||'—'}</td>
+      <td style="font-size:11px">${esc(r.categoria)||'—'}</td>
+      <td style="font-size:11px">${r.classe_risco&&r.classe_risco.includes('BAIXO')?'Baixo Risco':r.classe_risco&&r.classe_risco.includes('ALTO')?'Alto Risco':'—'}</td>
+      <td><span style="display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:700;background:${st==='fiscalizado'?'#e8f8ee':st==='irregular'?'#fdeef0':'#fff4e0'};color:${stColor}">${stTxt}</span></td>
+      <td style="font-size:11px">${last?formatDate(last.date):'—'}</td>
+      <td style="font-size:11px">${last?esc(last.agent):'—'}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('printContent').innerHTML = `
+    <div class="print-header">
+      <div>
+        <div style="font-size:12px;opacity:.85;margin-bottom:4px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div>
+        <h1>VISA Careiro</h1>
+        <div style="font-size:13px;opacity:.9;margin-top:4px">Vigilância Sanitária Municipal — Relatório Oficial</div>
+      </div>
+      <div class="print-meta">
+        <div style="font-size:18px;margin-bottom:4px">🏥</div>
+        <div><strong>Data:</strong> ${dateStr}</div>
+        <div><strong>Hora:</strong> ${timeStr}</div>
+        <div style="margin-top:6px;font-size:10px;opacity:.8">Documento gerado pelo<br>Sistema VISA Careiro</div>
+      </div>
+    </div>
+
+    <div class="print-body">
+      <!-- Filtros aplicados -->
+      <div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#555">
+        <strong style="color:#333">Filtros aplicados:</strong>
+        &nbsp;&nbsp;Bairro: <strong>${esc(bairroVal||'Todos')}</strong>
+        &nbsp;|&nbsp; Status: <strong>${statusText[statusVal]||statusVal||'Todos'}</strong>
+        &nbsp;|&nbsp; Risco: <strong>${riscoText[riscoVal]||riscoVal||'Todos'}</strong>
+      </div>
+
+      <!-- Resumo estatístico -->
+      <div class="print-section-title">📊 Resumo do Relatório</div>
+      <div class="print-summary">
+        <div class="print-stat">
+          <div class="pv">${relResultados.length}</div>
+          <div class="pl">Total de Estabelecimentos</div>
+        </div>
+        <div class="print-stat">
+          <div class="pv" style="color:#2a6e47">${cFisc}</div>
+          <div class="pl">Fiscalizados</div>
+        </div>
+        <div class="print-stat">
+          <div class="pv" style="color:#c0392b">${cIrreg}</div>
+          <div class="pl">Irregulares</div>
+        </div>
+        <div class="print-stat">
+          <div class="pv" style="color:#7a4e00">${cPend}</div>
+          <div class="pl">Pendentes</div>
+        </div>
+      </div>
+
+      <!-- Tabela -->
+      <div class="print-section-title">📋 Listagem de Estabelecimentos</div>
+      <table>
+        <thead>
+          <tr>
+            <th style="width:36px">#</th>
+            <th>Nome Fantasia</th>
+            <th>Razão Social</th>
+            <th>Bairro</th>
+            <th>Categoria</th>
+            <th>Risco</th>
+            <th>Status</th>
+            <th>Última Vistoria</th>
+            <th>Agente</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <!-- Rodapé com assinaturas -->
+      <div class="print-footer">
+        <div>
+          <div style="font-size:12px;color:#555;margin-bottom:32px">Responsável pela Emissão:</div>
+          <div class="sign-line">Chefe da Vigilância Sanitária Municipal</div>
+        </div>
+        <div>
+          <div style="font-size:12px;color:#555;margin-bottom:32px">Servidor Responsável:</div>
+          <div class="sign-line">Agente / Fiscal Sanitário</div>
+        </div>
+      </div>
+
+      <div style="margin-top:24px;padding:12px 16px;background:#f9f9f9;border-radius:8px;font-size:11px;color:#888;text-align:center">
+        Documento gerado automaticamente pelo Sistema de Cadastro Sanitário — VISA Careiro &nbsp;|&nbsp;
+        ${dateStr} às ${timeStr} &nbsp;|&nbsp; Total: ${relResultados.length} registros
+      </div>
+    </div>
+  `;
+
+  openModal('printPreviewModal');
+}
+
+function executarImpressao() {
+  const content = document.getElementById('printContent').innerHTML;
+  const printWin = window.open('','_blank','width=900,height=700');
+  printWin.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>VISA Careiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>${_printStyles()}</style>
+</head>
+<body>
+<div>${content}</div>
+<script>window.onload=function(){window.print();}<\/script>
+</body>
+</html>`);
+  printWin.document.close();
 }
 
 // ═══════════════════════════════════════════════════════
 // CONFIGURAÇÕES
 // ═══════════════════════════════════════════════════════
 function renderConfig() {
-  const cfg = getConfig();
+  const cfg  = getConfig();
   const togL = document.getElementById('togLicenca');
   const togS = document.getElementById('togSemFisc');
   if (togL) togL.checked = cfg.licenca !== false;
@@ -1360,17 +1952,18 @@ function renderConfig() {
 
 function renderAgents() {
   const agents = getAgents();
-  const list = document.getElementById('agentList');
+  const list   = document.getElementById('agentList');
+  if (!list) return;
   if (!agents.length) {
     list.innerHTML = '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">Nenhum agente cadastrado ainda.</div>';
     return;
   }
-  list.innerHTML = agents.map((a, i) => `
+  list.innerHTML = agents.map((a,i) => `
     <div class="agent-item">
       <div class="agent-avatar">👤</div>
       <div>
         <div class="agent-name">${esc(a.name)}</div>
-        <div class="agent-role">${esc(a.role) || 'Agente Fiscal'}</div>
+        <div class="agent-role">${esc(a.role)||'Agente Fiscal'}</div>
       </div>
       <div class="agent-actions">
         <button class="btn btn-danger btn-sm" onclick="removeAgent(${i})">🗑️</button>
@@ -1381,367 +1974,308 @@ function renderAgents() {
 function addAgent() {
   const name = document.getElementById('newAgentName').value.trim();
   const role = document.getElementById('newAgentRole').value.trim();
-  if (!name) { showToast('Informe o nome do agente', 'error'); return; }
+  if (!name) { showToast('Informe o nome do agente!','error'); return; }
   const agents = getAgents();
-  agents.push({ name, role: role || 'Agente Fiscal' });
+  agents.push({ name, role: role||'Agente Fiscal' });
   saveAgents(agents);
   document.getElementById('newAgentName').value = '';
   document.getElementById('newAgentRole').value = '';
   renderAgents();
-  showToast('Agente adicionado! ✅', 'success');
+  showToast('Agente adicionado! ✅','success');
 }
 
 function removeAgent(i) {
   const agents = getAgents();
-  agents.splice(i, 1);
+  agents.splice(i,1);
   saveAgents(agents);
   renderAgents();
-  showToast('Agente removido', 'success');
+  showToast('Agente removido.','success');
 }
 
 function updateConfigStats() {
-  const ins = getInspections();
-  const total = Object.values(ins).reduce((acc, arr) => acc + arr.length, 0);
-  const estabs = Object.keys(ins).length;
-  const custom = getCustom().length;
+  const ins     = getInspections();
+  const total   = Object.values(ins).reduce((acc,arr) => acc+(arr?.length||0), 0);
+  const estabs  = Object.keys(ins).length;
+  const custom  = getCustom().length;
   const deleted = getDeletedIds().length;
-  const edited = Object.keys(getEditedMap()).length;
-  const el = document.getElementById('configStats');
-  if (el) el.innerHTML = `Sistema: <strong>${DADOS.length}</strong> estabelecimentos &nbsp;|&nbsp; <strong>${total}</strong> fiscalizações em <strong>${estabs}</strong> estabs &nbsp;|&nbsp; <span style="color:var(--success)">+${custom} adicionados</span> &nbsp;|&nbsp; <span style="color:#3a7dc9">${edited} editados</span> &nbsp;|&nbsp; <span style="color:var(--danger)">${deleted} excluídos</span>`;
+  const edited  = Object.keys(getEditedMap()).length;
+  const el      = document.getElementById('configStats');
+  if (el) el.innerHTML = `Sistema: <strong>${DADOS.length}</strong> estabelecimentos &nbsp;|&nbsp;
+    <strong>${total}</strong> fiscalizações em <strong>${estabs}</strong> estabs &nbsp;|&nbsp;
+    <span style="color:var(--success)">+${custom} adicionados</span> &nbsp;|&nbsp;
+    <span style="color:#3a7dc9">${edited} editados</span> &nbsp;|&nbsp;
+    <span style="color:var(--danger)">${deleted} excluídos</span>`;
 }
 
+// ═══════════════════════════════════════════════════════
+// BACKUP COMPLETO (inclui dados base)
+// ═══════════════════════════════════════════════════════
 function backupData() {
   const data = {
+    version: 2,
+    exportedAt: new Date().toISOString(),
+    // Dados operacionais (visa_state/app)
     inspections: getInspections(),
-    agents: getAgents(),
-    config: getConfig(),
-    custom: getCustom(),
-    deleted: getDeletedIds(),
-    edited: getEditedMap(),
-    exportedAt: new Date().toISOString()
+    agents:      getAgents(),
+    config:      getConfig(),
+    custom:      getCustom(),
+    deleted:     getDeletedIds(),
+    edited:      getEditedMap(),
+    // Dados base (visa_state/base_data) — mesma coleção, doc diferente
+    estabelecimentos: _DADOS_ORIGINAL.slice()
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'backup_visa_careiro_' + new Date().toISOString().slice(0,10) + '.json';
-  a.click();
-  showToast('Backup exportado com sucesso!', 'success');
+  downloadJSON(data, 'backup_completo_visa_careiro_' + new Date().toISOString().slice(0,10) + '.json');
+  showToast('Backup completo exportado! ✅','success');
 }
 
 function importBackup() { document.getElementById('importFile').click(); }
+
 function doImport(e) {
-  const file = e.target.files[0];
+  const file = e.target.files[0]; e.target.value = '';
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
+  readJSON(file, async data => {
     try {
-      const data = JSON.parse(ev.target.result);
+      // Restaura dados operacionais
       if (data.inspections) saveInspections(data.inspections);
-      if (data.agents) saveAgents(data.agents);
-      if (data.config) setLS('visa_config', data.config);
-      if (data.custom) saveCustom(data.custom);
-      if (data.deleted) saveDeletedIds(data.deleted);
-      if (data.edited) saveEditedMap(data.edited);
+      if (data.agents)      saveAgents(data.agents);
+      if (data.config)      { _fbCache.config = data.config; _saveField('config', data.config); }
+      if (data.custom)      saveCustom(data.custom);
+      if (data.deleted)     saveDeletedIds(data.deleted);
+      if (data.edited)      saveEditedMap(data.edited);
+
+      // Restaura dados base se presentes no backup
+      if (Array.isArray(data.estabelecimentos) && data.estabelecimentos.length > 0) {
+        await _BASE_REF.set({
+          estabelecimentos: data.estabelecimentos,
+          importedAt: new Date().toISOString(),
+          total: data.estabelecimentos.length
+        });
+        _DADOS_ORIGINAL.length = 0;
+        data.estabelecimentos.forEach(r => _DADOS_ORIGINAL.push(r));
+        showToast('✅ '+data.estabelecimentos.length+' estabelecimentos base restaurados!','success');
+      }
+
       rebuildDADOS();
       refreshAllCategoryDropdowns();
       renderConfig();
       refreshAfterChange();
-      showToast('Backup importado com sucesso! ✅', 'success');
-    } catch { showToast('Arquivo inválido!', 'error'); }
+      showToast('Backup restaurado com sucesso! ✅','success');
+    } catch(err) { showToast('Arquivo inválido: '+err.message,'error'); }
+  });
+}
+
+function clearAllFiscalizacoes() {
+  if (!confirm('Isso vai apagar TODAS as fiscalizações. Continuar?')) return;
+  saveInspections({});
+  updateTopBadges();
+  if (currentPage==='fiscalizacao') renderFiscalizacoes();
+  if (currentPage==='dashboard')    renderDashboard();
+  updateConfigStats();
+  showToast('Fiscalizações apagadas.','success');
+}
+
+
+function downloadJSON(obj, filename) {
+  downloadBlob(new Blob([JSON.stringify(obj,null,2)], { type:'application/json' }), filename);
+}
+
+function downloadBlob(blob, filename) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function readJSON(file, cb) {
+  const reader = new FileReader();
+  reader.onload = ev => {
+    try { cb(JSON.parse(ev.target.result)); }
+    catch { showToast('Erro ao ler o arquivo JSON.','error'); }
   };
   reader.readAsText(file);
 }
 
-function clearAllFiscalizacoes() {
-  if (!confirm('Tem certeza? Isso vai apagar TODAS as fiscalizações registradas!')) return;
-  saveInspections({});
-  updateTopBadges();
-  showToast('Fiscalizações apagadas.', 'success');
-  updateConfigStats();
-}
-
 // ═══════════════════════════════════════════════════════
-// CSV EXPORT
+// MODAIS
 // ═══════════════════════════════════════════════════════
-function exportCSV() {
-  const data = filteredData();
-  exportToCSV(data, 'estabelecimentos_visa_careiro.csv');
-}
+function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
+function closeModal(id) { document.getElementById(id)?.classList.remove('open'); }
 
-function exportToCSV(data, filename) {
-  const headers = ['ID','Nome Fantasia','Razão Social','Endereço','Bairro','Categoria','Tipo Atividade','CNAE','Classe Risco','Último Licenciamento','Órgão Licenciador','Status Fiscalização','Última Vistoria','Agente'];
-  const rows = data.map(r => {
-    const last = getLastInspection(r.id);
-    return [r.id, r.nome_fantasia, r.razao_social, r.endereco, r.bairro, r.categoria, r.tipo_atividade, r.cnae, r.classe_risco, r.ultimo_licenciamento, r.orgao_licenciador, getStatusFor(r.id), last?.date || '', last?.agent || ''].map(v => '"' + String(v || '').replace(/"/g, '""') + '"').join(',');
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.overlay').forEach(o => {
+    o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
   });
-  const csv = [headers.join(','), ...rows].join('\n');
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = filename;
-  a.click();
-  showToast('CSV exportado com sucesso!', 'success');
-}
+});
 
 // ═══════════════════════════════════════════════════════
-// MODAL HELPERS
+// CRUD ESTABELECIMENTOS
 // ═══════════════════════════════════════════════════════
-function openModal(id) { document.getElementById(id).classList.add('open'); }
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
-
-// ═══════════════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════════════
-function formatDate(d) {
-  if (!d) return '—';
-  try {
-    const dt = new Date(d);
-    if (isNaN(dt)) return d;
-    return dt.toLocaleDateString('pt-BR');
-  } catch { return d; }
+function refreshAllCategoryDropdowns() {
+  const cats   = [...new Set(DADOS.map(r => r.categoria).filter(Boolean))].sort();
+  const catSel = document.getElementById('filterCategoria');
+  if (!catSel) return;
+  const curVal = catSel.value;
+  catSel.innerHTML = '<option value="">Todas as categorias</option>' +
+    cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  catSel.value = curVal;
 }
 
-function daysUntil(d) {
-  const now = new Date(); now.setHours(0,0,0,0);
-  const dt = new Date(d); dt.setHours(0,0,0,0);
-  return Math.ceil((dt - now) / 86400000);
+function initCatDatalist() {
+  const cats = [...new Set(DADOS.map(r => r.categoria).filter(Boolean))].sort();
+  const dl   = document.getElementById('catList');
+  if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
 }
 
-function showToast(msg, type = 'success') {
-  const c = document.getElementById('toastContainer');
-  const t = document.createElement('div');
-  t.className = 'toast ' + type;
-  t.innerHTML = (type === 'success' ? '✅' : '❌') + ' ' + msg;
-  c.appendChild(t);
-  setTimeout(() => { t.style.animation = 'slideOut .3s ease forwards'; setTimeout(() => t.remove(), 300); }, 3000);
+function refreshAfterChange() {
+  updateTopBadges();
+  const el = document.getElementById('statTotal');
+  if (el) el.textContent = DADOS.length;
+  if (currentPage==='estabelecimentos') renderTable();
+  if (currentPage==='dashboard')        renderDashboard();
+  if (currentPage==='relatorios')       gerarRelatorio();
+  if (currentPage==='fiscalizacao')     renderFiscalizacoes();
+  if (currentPage==='configuracoes')    updateConfigStats();
 }
 
-function updateTopBadges() {
-  const ins = getInspections();
-  let f = 0;
-  DADOS.forEach(r => { const st = getStatusFor(r.id); if (st !== 'pendente') f++; });
-  document.getElementById('badgeTotal').textContent = DADOS.length;
-  document.getElementById('badgeFiscalizado').textContent = f;
-}
-
-// ═══════════════════════════════════════════════════════
-// CRUD — DADOS CUSTOMIZADOS
-// ═══════════════════════════════════════════════════════
-
-// Custom records stored in localStorage, merged with DADOS at runtime
-function getCustom() { return getLS('visa_custom', []); }
-function saveCustom(d) { setLS('visa_custom', d); }
-
-// Merged dataset: original DADOS + custom additions, minus deleted IDs
-function getDeletedIds() { return getLS('visa_deleted', []); }
-function saveDeletedIds(d) { setLS('visa_deleted', d); }
-function getEditedMap() { return getLS('visa_edited', {}); }
-function saveEditedMap(d) { setLS('visa_edited', d); }
-
-// Override DADOS array at runtime with edits/adds/deletes
-function rebuildDADOS() {
-  const deleted = getDeletedIds();
-  const edited = getEditedMap();
-  const custom = getCustom();
-
-  // Remove deleted
-  let base = _DADOS_ORIGINAL.filter(r => !deleted.includes(r.id));
-
-  // Apply edits
-  base = base.map(r => edited[r.id] ? { ...r, ...edited[r.id] } : r);
-
-  // Add custom
-  DADOS.length = 0;
-  [...base, ...custom].forEach(r => DADOS.push(r));
-}
-
-// ─── ADD ──────────────────────────────────────────────
 function openAdd() {
   currentEditId = null;
   document.getElementById('estabModalTitle').textContent = '＋ Novo Estabelecimento';
-  document.getElementById('estabModalSub').textContent = 'Preencha os dados do novo estabelecimento';
+  document.getElementById('estabModalSub').textContent   = 'Preencha os dados do novo estabelecimento';
   clearEstabForm();
   openModal('modalEstab');
 }
 
-// ─── EDIT ─────────────────────────────────────────────
-let currentEditId = null;
 function openEdit(id) {
   const r = DADOS.find(d => d.id === id);
   if (!r) return;
   currentEditId = id;
   document.getElementById('estabModalTitle').textContent = '✏️ Editar Estabelecimento';
-  document.getElementById('estabModalSub').textContent = r.nome_fantasia;
-
-  document.getElementById('estNome').value      = r.nome_fantasia || '';
-  document.getElementById('estRazao').value     = r.razao_social || '';
-  document.getElementById('estEndereco').value  = r.endereco || '';
-  document.getElementById('estBairro').value    = r.bairro || '';
-  document.getElementById('estCategoria').value = r.categoria || '';
-  document.getElementById('estAtividade').value = r.tipo_atividade || '';
-  document.getElementById('estCnae').value      = r.cnae || '';
-  document.getElementById('estRisco').value     = r.classe_risco || '';
-  document.getElementById('estLicenca').value   = r.ultimo_licenciamento ? r.ultimo_licenciamento.slice(0,10) : '';
-  document.getElementById('estOrgao').value     = r.orgao_licenciador || '';
-
+  document.getElementById('estabModalSub').textContent   = r.nome_fantasia;
+  document.getElementById('estNome').value      = r.nome_fantasia||'';
+  document.getElementById('estRazao').value     = r.razao_social||'';
+  document.getElementById('estEndereco').value  = r.endereco||'';
+  document.getElementById('estBairro').value    = r.bairro||'';
+  document.getElementById('estCategoria').value = r.categoria||'';
+  document.getElementById('estAtividade').value = r.tipo_atividade||'';
+  document.getElementById('estCnae').value      = r.cnae||'';
+  document.getElementById('estRisco').value     = r.classe_risco||'';
+  document.getElementById('estLicenca').value   = r.ultimo_licenciamento?.slice(0,10)||'';
+  document.getElementById('estOrgao').value     = r.orgao_licenciador||'';
   openModal('modalEstab');
 }
 
 function clearEstabForm() {
   ['estNome','estRazao','estEndereco','estCategoria','estAtividade','estCnae','estLicenca','estOrgao'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
+    const el = document.getElementById(id); if (el) el.value = '';
   });
   document.getElementById('estBairro').value = '';
-  document.getElementById('estRisco').value = '';
+  document.getElementById('estRisco').value  = '';
 }
 
-// ─── SAVE (add or edit) ───────────────────────────────
 function saveEstab() {
-  const nome    = document.getElementById('estNome').value.trim();
-  const bairro  = document.getElementById('estBairro').value;
-  if (!nome)   { showToast('Informe o Nome Fantasia!', 'error'); return; }
-  if (!bairro) { showToast('Selecione o Bairro!', 'error'); return; }
-
+  const nome   = document.getElementById('estNome').value.trim();
+  const bairro = document.getElementById('estBairro').value;
+  if (!nome)   { showToast('Informe o Nome Fantasia!','error'); return; }
+  if (!bairro) { showToast('Selecione o Bairro!','error'); return; }
   const payload = {
-    nome_fantasia:       nome,
-    razao_social:        document.getElementById('estRazao').value.trim(),
-    endereco:            document.getElementById('estEndereco').value.trim(),
+    nome_fantasia:        nome,
+    razao_social:         document.getElementById('estRazao').value.trim(),
+    endereco:             document.getElementById('estEndereco').value.trim(),
     bairro,
-    categoria:           document.getElementById('estCategoria').value.trim().toUpperCase(),
-    tipo_atividade:      document.getElementById('estAtividade').value.trim().toUpperCase(),
-    cnae:                document.getElementById('estCnae').value.trim(),
-    classe_risco:        document.getElementById('estRisco').value,
-    ultimo_licenciamento: document.getElementById('estLicenca').value || '',
-    orgao_licenciador:   document.getElementById('estOrgao').value.trim(),
+    categoria:            document.getElementById('estCategoria').value.trim().toUpperCase(),
+    tipo_atividade:       document.getElementById('estAtividade').value.trim().toUpperCase(),
+    cnae:                 document.getElementById('estCnae').value.trim(),
+    classe_risco:         document.getElementById('estRisco').value,
+    ultimo_licenciamento: document.getElementById('estLicenca').value||'',
+    orgao_licenciador:    document.getElementById('estOrgao').value.trim(),
   };
-
   if (currentEditId !== null) {
-    // Edit existing
     const edited = getEditedMap();
-    edited[currentEditId] = { ...edited[currentEditId], ...payload };
+    edited[String(currentEditId)] = { ...edited[String(currentEditId)], ...payload };
     saveEditedMap(edited);
-    showToast('Estabelecimento atualizado! ✅', 'success');
+    showToast('Estabelecimento atualizado! ✅','success');
   } else {
-    // Add new
     const custom = getCustom();
-    const newId = Date.now(); // unique id
-    custom.push({ id: newId, ...payload });
+    custom.push({ id: Date.now(), ...payload });
     saveCustom(custom);
-    showToast('Estabelecimento adicionado! ✅', 'success');
+    showToast('Estabelecimento adicionado! ✅','success');
   }
-
   rebuildDADOS();
   closeModal('modalEstab');
   refreshAllCategoryDropdowns();
   refreshAfterChange();
 }
 
-// ─── DELETE ───────────────────────────────────────────
-let _pendingDeleteId = null;
 function deleteEstab(id) {
   const r = DADOS.find(d => d.id === id);
   _pendingDeleteId = id;
-  document.getElementById('delNomeLabel').textContent = r ? r.nome_fantasia : 'ID ' + id;
+  document.getElementById('delNomeLabel').textContent = r ? r.nome_fantasia : 'ID '+id;
   openModal('modalConfirmDel');
 }
 
 function confirmDelete() {
   const id = _pendingDeleteId;
   if (id === null) return;
-
-  // Check if it's an original or custom record
-  const isOriginal = _DADOS_ORIGINAL.some(r => r.id === id);
-  if (isOriginal) {
+  if (_DADOS_ORIGINAL.some(r => r.id === id)) {
     const deleted = getDeletedIds();
-    if (!deleted.includes(id)) deleted.push(id);
-    saveDeletedIds(deleted);
-    // Also remove from edited map if present
+    if (!deleted.includes(id)) { deleted.push(id); saveDeletedIds(deleted); }
     const edited = getEditedMap();
-    delete edited[id];
+    delete edited[String(id)];
     saveEditedMap(edited);
   } else {
-    // Custom record
-    const custom = getCustom().filter(r => r.id !== id);
-    saveCustom(custom);
+    saveCustom(getCustom().filter(r => r.id !== id));
   }
-
-  // Remove inspections for this record
   const ins = getInspections();
-  delete ins[id];
+  delete ins[insKey(id)];
   saveInspections(ins);
-
   rebuildDADOS();
   closeModal('modalConfirmDel');
-  showToast('Estabelecimento excluído.', 'success');
+  showToast('Estabelecimento excluído.','success');
   refreshAfterChange();
   _pendingDeleteId = null;
 }
 
-// ─── HELPERS ─────────────────────────────────────────
-function refreshAfterChange() {
-  updateTopBadges();
-  if (currentPage === 'estabelecimentos') renderTable();
-  if (currentPage === 'dashboard') renderDashboard();
-  if (currentPage === 'relatorios') gerarRelatorio();
-  document.getElementById('statTotal').textContent = DADOS.length;
-}
-
-function refreshAllCategoryDropdowns() {
-  const cats = [...new Set(DADOS.map(r => r.categoria).filter(Boolean))].sort();
-  // Main filter select
-  const catSel = document.getElementById('filterCategoria');
-  const curVal = catSel.value;
-  catSel.innerHTML = '<option value="">Todas as categorias</option>' + cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
-  catSel.value = curVal;
-  // datalist
-  const dl = document.getElementById('catList');
-  if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
-}
-
-// ─── INIT DATALIST ────────────────────────────────────
-function initCatDatalist() {
-  const cats = [...new Set(DADOS.map(r => r.categoria).filter(Boolean))].sort();
-  const dl = document.getElementById('catList');
-  if (dl) dl.innerHTML = cats.map(c => `<option value="${esc(c)}">`).join('');
-}
-
 // ═══════════════════════════════════════════════════════
-// BOOT — carrega dados.json e inicializa o app
+// BOOT
 // ═══════════════════════════════════════════════════════
 async function boot() {
-  // Mostrar loading
-  document.querySelectorAll('.page').forEach(p => p.style.opacity = '0.4');
+  const loadEl = document.getElementById('loadingOverlay');
+  if (loadEl) loadEl.style.display = 'flex';
+
+  try {
+    const snap = await _STATE_REF.get();
+    if (snap.exists) {
+      const d = snap.data();
+      if (d.inspections) _fbCache.inspections = d.inspections;
+      if (d.agents)      _fbCache.agents      = d.agents;
+      if (d.config)      _fbCache.config      = d.config;
+      if (d.custom)      _fbCache.custom      = d.custom;
+      if (d.deleted)     _fbCache.deleted     = d.deleted;
+      if (d.edited)      _fbCache.edited      = d.edited;
+    }
+  } catch(e) {
+    console.warn('Firestore state indisponível:', e);
+    showToast('⚠️ Sem conexão com a nuvem.','error');
+  }
 
   let raw = [];
   try {
-    // 1) Tenta localStorage (cache de importações anteriores)
-    const cached = getLS('visa_dados_base', null);
-
-    // 2) Tenta buscar dados.json (mesmo diretório)
-    const resp = await fetch('dados.json');
-    if (resp.ok) {
-      raw = await resp.json();
-      // Salva cache com timestamp
-      setLS('visa_dados_base', raw);
-      setLS('visa_dados_ts', Date.now());
-    } else if (cached) {
-      raw = cached;
+    const baseSnap = await _BASE_REF.get();
+    if (baseSnap.exists) {
+      const bd = baseSnap.data();
+      if (Array.isArray(bd.estabelecimentos)) raw = bd.estabelecimentos;
     }
-  } catch (e) {
-    // offline ou arquivo ausente → usa cache
-    const cached = getLS('visa_dados_base', []);
-    raw = cached;
+  } catch(e) {
+    console.warn('Erro ao carregar dados base:', e);
   }
 
-  // Popula DADOS e guarda cópia imutável
-  DADOS.length = 0;
-  raw.forEach(r => DADOS.push(r));
   _DADOS_ORIGINAL.length = 0;
   raw.forEach(r => _DADOS_ORIGINAL.push(r));
 
-  document.querySelectorAll('.page').forEach(p => p.style.opacity = '');
+  if (loadEl) loadEl.style.display = 'none';
+
+
   init();
 }
 
