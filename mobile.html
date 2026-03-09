@@ -1,0 +1,1422 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f48aab">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="VISA Careiro">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="imag01.jpeg">
+<title>VISA Careiro</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+<style>
+/* ── RESET & BASE ─────────────────────────────────────── */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --primary:#f48aab;--primary-dark:#e8709a;--primary-soft:#fde8ee;
+  --accent:#f6c341;--accent-soft:#fffbeb;
+  --bg:#f7f2f5;--surface:#ffffff;--surface2:#fdf8fa;
+  --text:#1a0f14;--text2:#6b4a57;--text3:#b08090;
+  --border:#f0dce4;
+  --success:#22c55e;--success-bg:#dcfce7;
+  --warning:#f59e0b;--warning-bg:#fef3c7;
+  --danger:#ef4444;--danger-bg:#fee2e2;
+  --r:16px;--r-sm:10px;--r-xs:8px;
+  --shadow:0 2px 12px rgba(244,138,171,.14);
+  --shadow-lg:0 8px 30px rgba(244,138,171,.22);
+  --safe-b:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;overflow:hidden;font-family:'Inter',sans-serif;background:var(--bg);color:var(--text)}
+
+/* ── SPLASH ───────────────────────────────────────────── */
+#splash{
+  position:fixed;inset:0;background:var(--primary-soft);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;
+  z-index:9999;transition:opacity .4s ease,transform .4s ease;
+}
+#splash.hide{opacity:0;transform:scale(1.04);pointer-events:none}
+.splash-logo{
+  width:96px;height:96px;border-radius:28px;
+  background:var(--primary);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 12px 40px rgba(244,138,171,.45);
+  overflow:hidden;
+}
+.splash-logo img{width:76px;height:76px;object-fit:contain;border-radius:18px}
+.splash-title{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-.5px}
+.splash-sub{font-size:13px;color:var(--text2);font-weight:500;letter-spacing:.3px}
+.splash-loader{width:160px;height:5px;background:rgba(244,138,171,.25);border-radius:50px;overflow:hidden;margin-top:8px}
+.splash-loader-bar{height:100%;width:45%;background:var(--primary);border-radius:50px;animation:loadPulse 1.2s ease-in-out infinite}
+@keyframes loadPulse{0%{width:20%;margin-left:0}50%{width:55%}100%{width:20%;margin-left:80%}}
+
+/* ── LAYOUT ───────────────────────────────────────────── */
+#app{height:100%;display:flex;flex-direction:column;overflow:hidden}
+.main-scroll{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:calc(72px + var(--safe-b))}
+
+/* ── TOP HEADER ───────────────────────────────────────── */
+.m-header{
+  background:var(--surface);
+  padding:calc(env(safe-area-inset-top,0px) + 12px) 16px 12px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);
+  box-shadow:0 1px 8px rgba(0,0,0,.05);
+  flex-shrink:0;
+}
+.m-header-logo{
+  width:36px;height:36px;border-radius:10px;
+  background:var(--primary);display:flex;align-items:center;justify-content:center;overflow:hidden;
+  box-shadow:0 3px 10px rgba(244,138,171,.4);
+}
+.m-header-logo img{width:28px;height:28px;object-fit:contain;border-radius:6px}
+.m-header-info{flex:1;min-width:0}
+.m-header-title{font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.m-header-sub{font-size:11px;color:var(--text3);font-weight:500}
+.m-header-badge{
+  background:var(--primary-soft);border:1px solid var(--primary);
+  border-radius:50px;padding:4px 10px;font-size:11px;font-weight:700;color:var(--primary-dark);
+  white-space:nowrap;
+}
+
+/* ── BOTTOM NAV ───────────────────────────────────────── */
+.m-nav{
+  position:fixed;bottom:0;left:0;right:0;
+  height:calc(60px + var(--safe-b));
+  background:var(--surface);
+  border-top:1.5px solid var(--border);
+  display:flex;align-items:stretch;
+  box-shadow:0 -4px 20px rgba(0,0,0,.08);
+  z-index:100;
+}
+.m-nav-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:3px;cursor:pointer;border:none;background:none;padding:0 0 var(--safe-b);
+  transition:background .15s;position:relative;
+}
+.m-nav-item:active{background:var(--primary-soft)}
+.m-nav-icon{font-size:20px;line-height:1;transition:transform .2s}
+.m-nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.2px;transition:color .2s}
+.m-nav-item.active .m-nav-label{color:var(--primary-dark)}
+.m-nav-item.active .m-nav-icon{transform:scale(1.12)}
+.m-nav-dot{
+  position:absolute;top:8px;right:calc(50% - 16px);
+  width:8px;height:8px;background:var(--danger);border-radius:50%;
+  border:2px solid var(--surface);display:none;
+}
+.m-nav-dot.show{display:block}
+
+/* ── PAGES ────────────────────────────────────────────── */
+.m-page{display:none}
+.m-page.active{display:block}
+
+/* ── SECTION HEADER ───────────────────────────────────── */
+.section-label{
+  font-size:11px;font-weight:700;color:var(--text3);
+  letter-spacing:1px;text-transform:uppercase;
+  padding:20px 16px 8px;
+}
+
+/* ── STAT CARDS ───────────────────────────────────────── */
+.stats-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:16px}
+.m-stat{
+  background:var(--surface);border-radius:var(--r);padding:16px;
+  box-shadow:var(--shadow);border:1px solid var(--border);
+  position:relative;overflow:hidden;
+}
+.m-stat::before{
+  content:'';position:absolute;top:-16px;right:-16px;
+  width:64px;height:64px;border-radius:50%;opacity:.15;
+}
+.m-stat.rosa::before{background:var(--primary)}
+.m-stat.amarelo::before{background:var(--accent)}
+.m-stat.verde::before{background:var(--success)}
+.m-stat.danger::before{background:var(--danger)}
+.m-stat-icon{font-size:22px;margin-bottom:8px}
+.m-stat-val{font-size:30px;font-weight:800;line-height:1;letter-spacing:-1px}
+.m-stat.rosa .m-stat-val{color:var(--primary-dark)}
+.m-stat.amarelo .m-stat-val{color:#b07000}
+.m-stat.verde .m-stat-val{color:#166534}
+.m-stat.danger .m-stat-val{color:var(--danger)}
+.m-stat-label{font-size:11px;font-weight:600;color:var(--text3);margin-top:4px;text-transform:uppercase;letter-spacing:.4px}
+
+/* ── CHART CARD ───────────────────────────────────────── */
+.m-card{
+  background:var(--surface);margin:0 16px 14px;
+  border-radius:var(--r);padding:18px;
+  box-shadow:var(--shadow);border:1px solid var(--border);
+}
+.m-card-title{font-size:14px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.m-bar{margin-bottom:10px}
+.m-bar-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;color:var(--text)}
+.m-bar-row span:last-child{font-weight:700;color:var(--primary-dark)}
+.m-bar-track{height:7px;background:rgba(244,138,171,.2);border-radius:50px;overflow:hidden}
+.m-bar-fill{height:100%;background:var(--primary);border-radius:50px;transition:width .5s ease}
+.m-pie-row{display:flex;align-items:center;gap:10px;padding:7px 0;border-bottom:1px solid var(--border)}
+.m-pie-row:last-child{border-bottom:none}
+.m-pie-dot{width:12px;height:12px;border-radius:4px;flex-shrink:0}
+.m-pie-name{flex:1;font-size:13px;color:var(--text)}
+.m-pie-val{font-weight:700;font-size:14px}
+
+/* ── ALERT BANNER ─────────────────────────────────────── */
+.m-alert{
+  margin:16px 16px 0;background:var(--warning-bg);
+  border:1.5px solid var(--warning);border-radius:var(--r-sm);
+  padding:12px 14px;display:flex;align-items:center;gap:10px;font-size:13px;
+}
+.m-alert-text{flex:1;color:#7a4e00}
+.m-alert-btn{background:var(--warning);color:#fff;border:none;border-radius:50px;padding:5px 12px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+
+/* ── SEARCH ───────────────────────────────────────────── */
+.m-search{
+  margin:16px 16px 10px;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:50px;display:flex;align-items:center;gap:8px;
+  padding:10px 16px;box-shadow:var(--shadow);
+  transition:border-color .2s;
+}
+.m-search:focus-within{border-color:var(--primary);box-shadow:0 0 0 3px rgba(244,138,171,.18)}
+.m-search input{flex:1;border:none;outline:none;font-family:'Inter',sans-serif;font-size:14px;background:transparent;color:var(--text)}
+.m-search input::placeholder{color:var(--text3)}
+.m-search-clear{background:none;border:none;font-size:16px;cursor:pointer;color:var(--text3);padding:0;display:none}
+
+/* ── FILTER PILLS ─────────────────────────────────────── */
+.m-filters{display:flex;gap:8px;padding:0 16px 12px;overflow-x:auto;scrollbar-width:none}
+.m-filters::-webkit-scrollbar{display:none}
+.m-pill{
+  flex-shrink:0;border:1.5px solid var(--border);border-radius:50px;
+  padding:6px 14px;font-size:12px;font-weight:600;color:var(--text2);
+  background:var(--surface);cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.m-pill.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.m-pill-select{
+  flex-shrink:0;border:1.5px solid var(--border);border-radius:50px;
+  padding:6px 28px 6px 14px;font-size:12px;font-weight:600;color:var(--text2);
+  background:var(--surface);cursor:pointer;outline:none;
+  appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23b08090' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+
+/* ── ESTABLISHMENT CARDS ──────────────────────────────── */
+.m-estab-list{padding:0 16px}
+.m-estab-card{
+  background:var(--surface);border-radius:var(--r);margin-bottom:10px;
+  border:1px solid var(--border);box-shadow:var(--shadow);
+  overflow:hidden;cursor:pointer;transition:box-shadow .2s,transform .1s;
+  -webkit-user-select:none;user-select:none;
+}
+.m-estab-card:active{transform:scale(.99);box-shadow:none}
+.m-card-body{padding:14px}
+.m-card-name{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+.m-card-razao{font-size:12px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:8px}
+.m-card-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.m-badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:50px;font-size:10px;font-weight:700;white-space:nowrap}
+.mb-bairro{background:rgba(246,195,65,.25);color:#7a5c00;border:1px solid rgba(246,195,65,.5)}
+.mb-cat{background:var(--primary-soft);color:#7a1040;border:1px solid rgba(244,138,171,.35)}
+.mb-baixo{background:var(--success-bg);color:#166534}
+.mb-alto{background:var(--danger-bg);color:var(--danger)}
+.mb-fiscalizado{background:var(--success-bg);color:#166534}
+.mb-pendente{background:var(--warning-bg);color:#7a4e00}
+.mb-irregular{background:var(--danger-bg);color:var(--danger)}
+.m-card-actions{
+  display:flex;border-top:1px solid var(--border);
+}
+.m-card-action-btn{
+  flex:1;padding:10px 6px;border:none;background:none;cursor:pointer;
+  font-size:11px;font-weight:600;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:3px;
+  transition:background .15s;
+}
+.m-card-action-btn:active{background:var(--primary-soft)}
+.m-card-action-btn:not(:last-child){border-right:1px solid var(--border)}
+.m-card-action-icon{font-size:16px}
+
+/* ── FISC CARDS ───────────────────────────────────────── */
+.m-fisc-card{
+  background:var(--surface);border-radius:var(--r);margin-bottom:10px;
+  border:1px solid var(--border);box-shadow:var(--shadow);padding:14px;
+  cursor:pointer;
+}
+.m-fisc-nome{font-size:13px;font-weight:700;color:var(--text);margin-bottom:4px}
+.m-fisc-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.m-fisc-date{font-size:11px;color:var(--text3)}
+.m-fisc-agent{font-size:11px;color:var(--text2);font-weight:500}
+.m-fisc-obs{font-size:12px;color:var(--text3);border-top:1px solid var(--border);padding-top:8px;margin-top:6px;font-style:italic}
+
+/* ── EMPTY STATE ──────────────────────────────────────── */
+.m-empty{text-align:center;padding:48px 20px;color:var(--text3)}
+.m-empty-icon{font-size:48px;margin-bottom:12px}
+.m-empty-title{font-size:16px;font-weight:600;color:var(--text2);margin-bottom:6px}
+.m-empty-text{font-size:13px}
+
+/* ── BOTTOM SHEET OVERLAY ─────────────────────────────── */
+.bs-overlay{
+  position:fixed;inset:0;background:rgba(26,15,20,.45);
+  z-index:500;display:none;align-items:flex-end;
+  backdrop-filter:blur(4px);
+}
+.bs-overlay.open{display:flex}
+.bs-sheet{
+  background:var(--surface);border-radius:22px 22px 0 0;
+  width:100%;max-height:90vh;overflow:hidden;
+  display:flex;flex-direction:column;
+  box-shadow:0 -8px 40px rgba(0,0,0,.18);
+  animation:sheetIn .3s cubic-bezier(.32,1.25,.4,1);
+}
+@keyframes sheetIn{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.bs-handle{width:40px;height:4px;background:rgba(0,0,0,.12);border-radius:50px;margin:12px auto 0}
+.bs-header{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.bs-title{font-size:17px;font-weight:700;color:var(--text)}
+.bs-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);width:32px;height:32px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:var(--surface2)}
+.bs-body{padding:16px 20px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1}
+
+/* ── DETAIL SHEET ─────────────────────────────────────── */
+.detail-field{margin-bottom:14px}
+.detail-label{font-size:10px;font-weight:700;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:3px}
+.detail-value{font-size:14px;color:var(--text);font-weight:500}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.detail-divider{height:1px;background:var(--border);margin:16px 0}
+
+/* ── HISTORY ──────────────────────────────────────────── */
+.m-hist-item{
+  background:var(--surface2);border:1px solid var(--border);
+  border-radius:var(--r-sm);padding:12px;margin-bottom:10px;
+  position:relative;padding-left:18px;
+}
+.m-hist-item::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px;border-radius:4px 0 0 4px}
+.m-hist-item.fiscalizado::before{background:var(--success)}
+.m-hist-item.pendente::before{background:var(--warning)}
+.m-hist-item.irregular::before{background:var(--danger)}
+.m-hist-date{font-size:11px;color:var(--text3);font-weight:600;margin-bottom:2px}
+.m-hist-agent{font-size:13px;font-weight:600;color:var(--text)}
+.m-hist-obs{font-size:12px;color:var(--text2);margin-top:4px;font-style:italic}
+
+/* ── FORMS ────────────────────────────────────────────── */
+.m-form-group{margin-bottom:14px}
+.m-form-label{font-size:11px;font-weight:700;color:var(--text3);letter-spacing:.6px;text-transform:uppercase;display:block;margin-bottom:6px}
+.m-form-input,.m-form-select,.m-form-textarea{
+  width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:var(--r-sm);
+  font-size:15px;font-family:'Inter',sans-serif;color:var(--text);background:var(--surface2);outline:none;
+  transition:border-color .2s;
+}
+.m-form-input:focus,.m-form-select:focus,.m-form-textarea:focus{border-color:var(--primary);background:var(--surface);box-shadow:0 0 0 3px rgba(244,138,171,.15)}
+.m-form-textarea{min-height:80px;resize:vertical}
+.m-form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+/* ── BUTTONS ──────────────────────────────────────────── */
+.m-btn{
+  width:100%;padding:14px;border:none;border-radius:var(--r-sm);
+  font-size:15px;font-weight:700;font-family:'Inter',sans-serif;
+  cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.m-btn:active{transform:scale(.98)}
+.m-btn-primary{background:var(--primary);color:#fff;box-shadow:0 4px 16px rgba(244,138,171,.4)}
+.m-btn-primary:active{background:var(--primary-dark)}
+.m-btn-ghost{background:var(--surface2);color:var(--text2);border:1.5px solid var(--border)}
+.m-btn-danger{background:var(--danger-bg);color:var(--danger);border:1.5px solid rgba(239,68,68,.25)}
+.m-btn-row{display:flex;gap:10px;margin-top:16px}
+.m-btn-row .m-btn{flex:1}
+
+/* ── TOAST ────────────────────────────────────────────── */
+.m-toast-wrap{position:fixed;top:calc(env(safe-area-inset-top,0px) + 60px);left:16px;right:16px;z-index:9000;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.m-toast{
+  background:rgba(26,15,20,.9);color:#fff;border-radius:var(--r-sm);
+  padding:13px 16px;font-size:13px;font-weight:500;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 4px 20px rgba(0,0,0,.25);
+  animation:toastIn .3s ease;
+}
+.m-toast.success{background:#15803d}
+.m-toast.error{background:#b91c1c}
+@keyframes toastIn{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:none}}
+@keyframes toastOut{to{opacity:0;transform:translateY(-12px)}}
+
+/* ── RELATÓRIOS PAGE ──────────────────────────────────── */
+.m-report-card{background:var(--surface);border-radius:var(--r);margin:0 16px 14px;border:1px solid var(--border);box-shadow:var(--shadow);padding:18px}
+.m-report-card h3{font-size:15px;font-weight:700;margin-bottom:14px}
+.m-report-row-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);font-size:13px}
+.m-report-row-item:last-child{border-bottom:none}
+
+/* ── CONFIG PAGE ──────────────────────────────────────── */
+.m-config-section{margin:0 16px 14px;background:var(--surface);border-radius:var(--r);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden}
+.m-config-section-title{padding:14px 16px;font-size:13px;font-weight:700;color:var(--text3);letter-spacing:.5px;text-transform:uppercase;background:var(--surface2);border-bottom:1px solid var(--border)}
+.m-config-item{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s}
+.m-config-item:last-child{border-bottom:none}
+.m-config-item:active{background:var(--primary-soft)}
+.m-config-item-left{flex:1;min-width:0}
+.m-config-item-title{font-size:14px;font-weight:600;color:var(--text)}
+.m-config-item-sub{font-size:12px;color:var(--text3);margin-top:2px}
+.m-config-arrow{color:var(--text3);font-size:16px}
+/* Toggle */
+.m-toggle{position:relative;width:46px;height:26px;flex-shrink:0}
+.m-toggle input{opacity:0;width:0;height:0;position:absolute}
+.m-toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:26px;transition:.3s;cursor:pointer}
+.m-toggle-slider::before{content:'';position:absolute;height:20px;width:20px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.m-toggle input:checked + .m-toggle-slider{background:var(--primary)}
+.m-toggle input:checked + .m-toggle-slider::before{transform:translateX(20px)}
+
+/* ── AGENT CHIP ───────────────────────────────────────── */
+.m-agent-chip{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 16px;border-bottom:1px solid var(--border);
+}
+.m-agent-avatar{width:36px;height:36px;border-radius:50%;background:var(--primary);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.m-agent-info{flex:1;min-width:0}
+.m-agent-name{font-size:14px;font-weight:600;color:var(--text)}
+.m-agent-role{font-size:12px;color:var(--text3)}
+.m-agent-del{background:none;border:none;font-size:18px;cursor:pointer;color:var(--text3);padding:6px}
+
+/* ── BAIRRO TAG ───────────────────────────────────────── */
+.m-bairro-tags{display:flex;flex-wrap:wrap;gap:8px;padding:14px 16px}
+.m-bairro-tag{
+  display:inline-flex;align-items:center;gap:6px;
+  background:rgba(246,195,65,.2);border:1px solid rgba(246,195,65,.5);
+  border-radius:50px;padding:5px 12px;font-size:12px;font-weight:600;color:#7a5c00;
+}
+.m-bairro-tag button{background:none;border:none;cursor:pointer;color:#a07800;font-size:14px;line-height:1;padding:0}
+
+/* ── PAGINATION ───────────────────────────────────────── */
+.m-load-more{text-align:center;padding:12px}
+.m-load-more button{background:var(--surface);border:1.5px solid var(--border);border-radius:50px;padding:10px 24px;font-size:13px;font-weight:600;color:var(--text2);cursor:pointer;width:100%}
+.m-load-more button:active{background:var(--primary-soft)}
+</style>
+</head>
+<body>
+
+<!-- Splash -->
+<div id="splash">
+  <div class="splash-logo">
+    <img src="imag01.jpeg" alt="VISA" onerror="this.outerHTML='<span style=&quot;font-size:46px&quot;>🏥</span>'">
+  </div>
+  <div class="splash-title">VISA Careiro</div>
+  <div class="splash-sub">Vigilância Sanitária Municipal</div>
+  <div class="splash-loader"><div class="splash-loader-bar"></div></div>
+</div>
+
+<!-- App -->
+<div id="app" style="display:none">
+
+  <!-- Header -->
+  <div class="m-header">
+    <div class="m-header-logo">
+      <img src="imag01.jpeg" alt="" onerror="this.outerHTML='🏥'">
+    </div>
+    <div class="m-header-info">
+      <div class="m-header-title" id="mHeaderTitle">Dashboard</div>
+      <div class="m-header-sub">VISA Careiro — Careiro, AM</div>
+    </div>
+    <div class="m-header-badge">Total: <span id="mBadgeTotal">0</span></div>
+  </div>
+
+  <!-- Scroll Area -->
+  <div class="main-scroll">
+
+    <!-- ════ DASHBOARD ════ -->
+    <div class="m-page active" id="mpage-dashboard">
+      <div id="mAlertBanner"></div>
+      <div class="stats-row">
+        <div class="m-stat rosa"><div class="m-stat-icon">🏪</div><div class="m-stat-val" id="mStatTotal">0</div><div class="m-stat-label">Estabelecimentos</div></div>
+        <div class="m-stat amarelo"><div class="m-stat-icon">📋</div><div class="m-stat-val" id="mStatFisc">0</div><div class="m-stat-label">Fiscalizados</div></div>
+        <div class="m-stat verde"><div class="m-stat-icon">✅</div><div class="m-stat-val" id="mStatReg">0</div><div class="m-stat-label">Regulares</div></div>
+        <div class="m-stat danger"><div class="m-stat-icon">⚠️</div><div class="m-stat-val" id="mStatPend">0</div><div class="m-stat-label">Pendentes</div></div>
+      </div>
+      <div class="m-card">
+        <div class="m-card-title">📍 Por Bairro</div>
+        <div id="mBairroChart"></div>
+      </div>
+      <div class="m-card">
+        <div class="m-card-title">⚡ Classe de Risco</div>
+        <div id="mRiscoChart"></div>
+      </div>
+      <div class="m-card">
+        <div class="m-card-title">🏷️ Top Categorias</div>
+        <div id="mCatChart"></div>
+      </div>
+      <div class="m-card">
+        <div class="m-card-title">📅 Vencimentos Próximos</div>
+        <div id="mVencList"></div>
+      </div>
+    </div>
+
+    <!-- ════ ESTABELECIMENTOS ════ -->
+    <div class="m-page" id="mpage-estabelecimentos">
+      <div class="m-search" id="mSearchBox">
+        <span>🔍</span>
+        <input id="mSearchInput" type="search" placeholder="Buscar estabelecimento…" oninput="mOnSearch()">
+        <button class="m-search-clear" id="mSearchClear" onclick="mClearSearch()">✕</button>
+      </div>
+      <div class="m-filters">
+        <select class="m-pill-select" id="mFilterBairro" onchange="mApplyFilters()">
+          <option value="">Todos os bairros</option>
+        </select>
+        <select class="m-pill-select" id="mFilterStatus" onchange="mApplyFilters()">
+          <option value="">Todos os status</option>
+          <option value="fiscalizado">✅ Fiscalizado</option>
+          <option value="pendente">⏳ Pendente</option>
+          <option value="irregular">❌ Irregular</option>
+        </select>
+        <select class="m-pill-select" id="mFilterRisco" onchange="mApplyFilters()">
+          <option value="">Todo risco</option>
+          <option value="BAIXO RISCO">🟢 Baixo</option>
+          <option value="ALTO RISCO">🔴 Alto</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 16px 8px">
+        <span style="font-size:12px;color:var(--text3)" id="mEstabCount">0 resultados</span>
+        <button onclick="mOpenAddEstab()" style="background:var(--primary);color:#fff;border:none;border-radius:50px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer">＋ Novo</button>
+      </div>
+      <div class="m-estab-list" id="mEstabList"></div>
+      <div class="m-load-more" id="mEstabLoadMore" style="display:none">
+        <button onclick="mLoadMoreEstab()">Carregar mais</button>
+      </div>
+    </div>
+
+    <!-- ════ FISCALIZAÇÕES ════ -->
+    <div class="m-page" id="mpage-fiscalizacoes">
+      <div class="m-search">
+        <span>🔍</span>
+        <input id="mFiscSearch" type="search" placeholder="Buscar fiscalização…" oninput="mRenderFisc()">
+      </div>
+      <div class="m-filters">
+        <button class="m-pill active" onclick="mSetFiscFilter('')"  id="fpAll">Todos</button>
+        <button class="m-pill"        onclick="mSetFiscFilter('fiscalizado')" id="fpFisc">✅ Fiscalizado</button>
+        <button class="m-pill"        onclick="mSetFiscFilter('pendente')"    id="fpPend">⏳ Pendente</button>
+        <button class="m-pill"        onclick="mSetFiscFilter('irregular')"   id="fpIrreg">❌ Irregular</button>
+      </div>
+      <div style="padding:0 16px 8px;font-size:12px;color:var(--text3)" id="mFiscCount">0 registros</div>
+      <div style="padding:0 16px" id="mFiscList"></div>
+    </div>
+
+    <!-- ════ MAIS (Relatórios + Config) ════ -->
+    <div class="m-page" id="mpage-mais">
+      <div class="section-label">Relatórios</div>
+      <div class="m-report-card">
+        <h3>📊 Gerar Relatório</h3>
+        <div class="m-form-group">
+          <label class="m-form-label">Bairro</label>
+          <select class="m-form-select" id="mRelBairro"><option value="">Todos</option></select>
+        </div>
+        <div class="m-form-row">
+          <div class="m-form-group">
+            <label class="m-form-label">Status</label>
+            <select class="m-form-select" id="mRelStatus">
+              <option value="">Todos</option>
+              <option value="fiscalizado">Fiscalizado</option>
+              <option value="pendente">Pendente</option>
+              <option value="irregular">Irregular</option>
+            </select>
+          </div>
+          <div class="m-form-group">
+            <label class="m-form-label">Risco</label>
+            <select class="m-form-select" id="mRelRisco">
+              <option value="">Todos</option>
+              <option value="BAIXO RISCO">Baixo</option>
+              <option value="ALTO RISCO">Alto</option>
+            </select>
+          </div>
+        </div>
+        <button class="m-btn m-btn-primary" onclick="mGerarRelatorio()">📊 Gerar Relatório</button>
+      </div>
+      <div id="mRelResultContainer" style="display:none">
+        <div class="section-label">Resultado</div>
+        <div class="stats-row" style="padding-top:0">
+          <div class="m-stat rosa"><div class="m-stat-val" id="mRelTotal">0</div><div class="m-stat-label">Total</div></div>
+          <div class="m-stat verde"><div class="m-stat-val" id="mRelFisc">0</div><div class="m-stat-label">Fiscalizados</div></div>
+          <div class="m-stat danger"><div class="m-stat-val" id="mRelIrreg">0</div><div class="m-stat-label">Irregulares</div></div>
+          <div class="m-stat amarelo"><div class="m-stat-val" id="mRelPend">0</div><div class="m-stat-label">Pendentes</div></div>
+        </div>
+        <div class="m-report-card">
+          <h3>📋 Resultados</h3>
+          <div id="mRelList"></div>
+        </div>
+      </div>
+
+      <div class="section-label">Configurações</div>
+
+      <!-- Agentes -->
+      <div class="m-config-section">
+        <div class="m-config-section-title">👤 Agentes de Fiscalização</div>
+        <div class="m-agent-chip" style="padding:14px 16px;border-bottom:1px solid var(--border);gap:8px">
+          <input class="m-form-input" id="mNewAgentName" placeholder="Nome do agente…" style="flex:1;padding:10px 12px">
+          <input class="m-form-input" id="mNewAgentRole" placeholder="Cargo…" style="width:100px;padding:10px 12px">
+          <button onclick="mAddAgent()" style="background:var(--primary);color:#fff;border:none;border-radius:var(--r-xs);padding:10px 14px;font-weight:700;cursor:pointer;font-size:13px">+</button>
+        </div>
+        <div id="mAgentList"></div>
+      </div>
+
+      <!-- Bairros -->
+      <div class="m-config-section">
+        <div class="m-config-section-title">📍 Bairros e Distritos</div>
+        <div style="padding:14px 16px;border-bottom:1px solid var(--border);display:flex;gap:8px">
+          <input class="m-form-input" id="mNewBairro" placeholder="Nome do bairro…" style="flex:1;padding:10px 12px">
+          <button onclick="mAddBairro()" style="background:var(--primary);color:#fff;border:none;border-radius:var(--r-xs);padding:10px 16px;font-weight:700;cursor:pointer;font-size:13px">+</button>
+        </div>
+        <div class="m-bairro-tags" id="mBairroTags"></div>
+      </div>
+
+      <!-- Notificações -->
+      <div class="m-config-section">
+        <div class="m-config-section-title">🔔 Notificações</div>
+        <div class="m-config-item">
+          <div class="m-config-item-left">
+            <div class="m-config-item-title">Alerta de Licença Vencendo</div>
+            <div class="m-config-item-sub">Aviso 30 dias antes do vencimento</div>
+          </div>
+          <label class="m-toggle"><input type="checkbox" id="mTogLicenca" checked onchange="mSaveConfig()"><div class="m-toggle-slider"></div></label>
+        </div>
+        <div class="m-config-item">
+          <div class="m-config-item-left">
+            <div class="m-config-item-title">Sem Fiscalização</div>
+            <div class="m-config-item-sub">Destacar pendentes no dashboard</div>
+          </div>
+          <label class="m-toggle"><input type="checkbox" id="mTogSemFisc" checked onchange="mSaveConfig()"><div class="m-toggle-slider"></div></label>
+        </div>
+      </div>
+
+      <!-- Backup -->
+      <div class="m-config-section" style="margin-bottom:14px">
+        <div class="m-config-section-title">💾 Backup</div>
+        <div class="m-config-item" onclick="mBackupData()">
+          <div class="m-config-item-left">
+            <div class="m-config-item-title">⬇️ Exportar Backup</div>
+            <div class="m-config-item-sub">Salvar todos os dados</div>
+          </div>
+          <span class="m-config-arrow">›</span>
+        </div>
+        <div class="m-config-item" onclick="document.getElementById('mImportFile').click()">
+          <div class="m-config-item-left">
+            <div class="m-config-item-title">⬆️ Restaurar Backup</div>
+            <div class="m-config-item-sub">Importar arquivo .json</div>
+          </div>
+          <span class="m-config-arrow">›</span>
+        </div>
+      </div>
+      <input type="file" id="mImportFile" accept=".json" style="display:none" onchange="mDoImport(event)">
+
+      <div style="text-align:center;padding:16px;font-size:11px;color:var(--text3)">
+        Desenvolvido por <strong style="color:var(--text2)">Darlan Cardoso</strong><br>Sistema VISA Careiro
+      </div>
+    </div>
+
+  </div><!-- /main-scroll -->
+
+  <!-- Bottom Navigation -->
+  <nav class="m-nav">
+    <button class="m-nav-item active" id="mnav-dashboard" onclick="mNavigate('dashboard')">
+      <span class="m-nav-icon">📊</span>
+      <span class="m-nav-label">Dashboard</span>
+    </button>
+    <button class="m-nav-item" id="mnav-estabelecimentos" onclick="mNavigate('estabelecimentos')">
+      <span class="m-nav-icon">🏪</span>
+      <span class="m-nav-label">Locais</span>
+      <span class="m-nav-dot" id="mNavDotEstab"></span>
+    </button>
+    <button class="m-nav-item" id="mnav-fiscalizacoes" onclick="mNavigate('fiscalizacoes')">
+      <span class="m-nav-icon">🔍</span>
+      <span class="m-nav-label">Fiscaliz.</span>
+    </button>
+    <button class="m-nav-item" id="mnav-mais" onclick="mNavigate('mais')">
+      <span class="m-nav-icon">⚙️</span>
+      <span class="m-nav-label">Mais</span>
+    </button>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- Toast wrap -->
+<div class="m-toast-wrap" id="mToastWrap"></div>
+
+<!-- ── BOTTOM SHEETS ─────────────────────────────────── -->
+
+<!-- Detail sheet -->
+<div class="bs-overlay" id="bsDetail" onclick="if(event.target===this)mCloseBS('bsDetail')">
+  <div class="bs-sheet">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title" id="bsDetailNome">—</div>
+      <button class="bs-close" onclick="mCloseBS('bsDetail')">✕</button>
+    </div>
+    <div class="bs-body">
+      <div id="bsDetailBadges" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:16px"></div>
+      <div class="detail-grid" id="bsDetailInfo"></div>
+      <div class="detail-divider"></div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">📋 Histórico de Fiscalizações</div>
+      <div id="bsDetailHistory"></div>
+      <div class="m-btn-row">
+        <button class="m-btn m-btn-ghost" onclick="mCloseBS('bsDetail')">Fechar</button>
+        <button class="m-btn m-btn-primary" id="bsDetailInspBtn" onclick="()=>{}">🔍 Fiscalizar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fiscalizar sheet -->
+<div class="bs-overlay" id="bsInspect" onclick="if(event.target===this)mCloseBS('bsInspect')">
+  <div class="bs-sheet">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title">🔍 Registrar Fiscalização</div>
+      <button class="bs-close" onclick="mCloseBS('bsInspect')">✕</button>
+    </div>
+    <div class="bs-body">
+      <div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:14px" id="bsInspectNome">—</div>
+      <div class="m-form-row">
+        <div class="m-form-group">
+          <label class="m-form-label">Data</label>
+          <input class="m-form-input" type="date" id="mInspDate">
+        </div>
+        <div class="m-form-group">
+          <label class="m-form-label">Agente</label>
+          <select class="m-form-select" id="mInspAgent"></select>
+        </div>
+      </div>
+      <div class="m-form-group">
+        <label class="m-form-label">Status</label>
+        <select class="m-form-select" id="mInspStatus">
+          <option value="fiscalizado">✅ Fiscalizado — Regular</option>
+          <option value="pendente">⏳ Pendente</option>
+          <option value="irregular">❌ Irregular — Notificado</option>
+        </select>
+      </div>
+      <div class="m-form-group">
+        <label class="m-form-label">Observações</label>
+        <textarea class="m-form-textarea" id="mInspObs" placeholder="Condições, pendências, notificações…"></textarea>
+      </div>
+      <div class="m-btn-row">
+        <button class="m-btn m-btn-ghost" onclick="mCloseBS('bsInspect')">Cancelar</button>
+        <button class="m-btn m-btn-primary" onclick="mSaveInspection()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Estab sheet -->
+<div class="bs-overlay" id="bsEstab" onclick="if(event.target===this)mCloseBS('bsEstab')">
+  <div class="bs-sheet">
+    <div class="bs-handle"></div>
+    <div class="bs-header">
+      <div class="bs-title" id="bsEstabTitle">＋ Novo Estabelecimento</div>
+      <button class="bs-close" onclick="mCloseBS('bsEstab')">✕</button>
+    </div>
+    <div class="bs-body">
+      <div class="m-form-group">
+        <label class="m-form-label">Nome Fantasia *</label>
+        <input class="m-form-input" id="mEstNome" placeholder="Ex: MERCADINHO BOA SORTE">
+      </div>
+      <div class="m-form-group">
+        <label class="m-form-label">Razão Social</label>
+        <input class="m-form-input" id="mEstRazao" placeholder="Ex: JOÃO DA SILVA ME">
+      </div>
+      <div class="m-form-group">
+        <label class="m-form-label">Endereço</label>
+        <input class="m-form-input" id="mEstEndereco" placeholder="Ex: RUA DAS FLORES Nº 12">
+      </div>
+      <div class="m-form-row">
+        <div class="m-form-group">
+          <label class="m-form-label">Bairro *</label>
+          <select class="m-form-select" id="mEstBairro"><option value="">Selecionar…</option></select>
+        </div>
+        <div class="m-form-group">
+          <label class="m-form-label">Risco</label>
+          <select class="m-form-select" id="mEstRisco">
+            <option value="">Não informado</option>
+            <option value="BAIXO RISCO">🟢 Baixo</option>
+            <option value="ALTO RISCO">🔴 Alto</option>
+          </select>
+        </div>
+      </div>
+      <div class="m-form-group">
+        <label class="m-form-label">Categoria</label>
+        <input class="m-form-input" id="mEstCategoria" list="mCatList" placeholder="Ex: MERCADINHO">
+        <datalist id="mCatList"></datalist>
+      </div>
+      <div class="m-form-group">
+        <label class="m-form-label">Tipo de Atividade</label>
+        <input class="m-form-input" id="mEstAtividade" placeholder="Ex: VENDA DE ESTIVAS">
+      </div>
+      <div class="m-form-row">
+        <div class="m-form-group">
+          <label class="m-form-label">CNAE</label>
+          <input class="m-form-input" id="mEstCnae" placeholder="4712-1/00">
+        </div>
+        <div class="m-form-group">
+          <label class="m-form-label">Licença</label>
+          <input class="m-form-input" type="date" id="mEstLicenca">
+        </div>
+      </div>
+      <div class="m-form-group">
+        <label class="m-form-label">Órgão Licenciador</label>
+        <input class="m-form-input" id="mEstOrgao" placeholder="Ex: VISA/CAREIRO">
+      </div>
+      <div class="m-btn-row">
+        <button class="m-btn m-btn-ghost" onclick="mCloseBS('bsEstab')">Cancelar</button>
+        <button class="m-btn m-btn-primary" onclick="mSaveEstab()">💾 Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Estab -->
+<div class="bs-overlay" id="bsConfirmDel" onclick="if(event.target===this)mCloseBS('bsConfirmDel')">
+  <div class="bs-sheet" style="max-height:40vh">
+    <div class="bs-handle"></div>
+    <div class="bs-header" style="background:var(--danger-bg)">
+      <div class="bs-title" style="color:var(--danger)">🗑️ Confirmar Exclusão</div>
+      <button class="bs-close" onclick="mCloseBS('bsConfirmDel')">✕</button>
+    </div>
+    <div class="bs-body">
+      <p style="font-size:14px;margin-bottom:6px">Excluir o estabelecimento:</p>
+      <p style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:12px" id="bsDelNome">—</p>
+      <p style="font-size:12px;color:var(--text3);margin-bottom:16px">Esta ação também remove o histórico de fiscalizações. Não pode ser desfeita.</p>
+      <div class="m-btn-row">
+        <button class="m-btn m-btn-ghost" onclick="mCloseBS('bsConfirmDel')">Cancelar</button>
+        <button class="m-btn m-btn-danger" onclick="mConfirmDelete()">🗑️ Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete Bairro -->
+<div class="bs-overlay" id="bsConfirmDelBairro" onclick="if(event.target===this)mCloseBS('bsConfirmDelBairro')">
+  <div class="bs-sheet" style="max-height:36vh">
+    <div class="bs-handle"></div>
+    <div class="bs-header" style="background:var(--warning-bg)">
+      <div class="bs-title" style="color:#7a4e00">🗺️ Excluir Bairro</div>
+      <button class="bs-close" onclick="mCloseBS('bsConfirmDelBairro')">✕</button>
+    </div>
+    <div class="bs-body">
+      <p style="font-size:14px;margin-bottom:8px">Excluir o bairro:</p>
+      <p style="font-weight:700;font-size:15px;color:var(--text);margin-bottom:16px" id="bsDelBairroNome">—</p>
+      <div class="m-btn-row">
+        <button class="m-btn m-btn-ghost" onclick="mCloseBS('bsConfirmDelBairro')">Cancelar</button>
+        <button class="m-btn m-btn-danger" onclick="mConfirmRemoveBairro()">🗑️ Excluir</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// FIREBASE
+// ═══════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyDobyr74BiOubbSM44k6oKlfgmmuiGCk94",
+  authDomain: "visa-82b2c.firebaseapp.com",
+  projectId: "visa-82b2c",
+  storageBucket: "visa-82b2c.firebasestorage.app",
+  messagingSenderId: "1075858639777",
+  appId: "1:1075858639777:web:412689646dfb3aa6ba99e0"
+};
+const _fbApp     = firebase.initializeApp(firebaseConfig);
+const _db        = firebase.firestore(_fbApp);
+const _STATE_REF = _db.collection('visa_state').doc('app');
+const _BASE_REF  = _db.collection('visa_state').doc('base_data');
+
+// ═══════════════════════════════════════════════════════
+// ESTADO
+// ═══════════════════════════════════════════════════════
+let DADOS = [], _DADOS_ORIGINAL = [];
+let mCurrentPage  = 'dashboard';
+let mEstabOffset  = 0;
+const M_PAGE_SIZE = 15;
+let mFilters      = { q:'', bairro:'', status:'', risco:'' };
+let mFiscFilter   = '';
+let mCurrentInspectId = null;
+let mCurrentEditId    = null;
+let mPendingDelId     = null;
+let mPendingDelBairroIdx = null;
+
+const _fbCache = {
+  inspections:{}, agents:[], config:{licenca:true,semFisc:true},
+  custom:[], deleted:[], edited:{},
+  bairros:['Mercado Central','Centro','Bairro Novo','Vista Alegre','Novo Horizonte','Nova Esperança','Sebastião Borges']
+};
+
+// ═══════════════════════════════════════════════════════
+// DATA ACCESSORS (shared logic)
+// ═══════════════════════════════════════════════════════
+function _saveField(f,v){ _STATE_REF.set({[f]:v},{merge:true}).catch(e=>console.error(e)); }
+function getInspections(){return _fbCache.inspections}
+function saveInspections(d){_fbCache.inspections=d;_saveField('inspections',d)}
+function getAgents(){return _fbCache.agents}
+function saveAgents(d){_fbCache.agents=d;_saveField('agents',d)}
+function getConfig(){return _fbCache.config}
+function getCustom(){return _fbCache.custom}
+function saveCustom(d){_fbCache.custom=d;_saveField('custom',d)}
+function getDeletedIds(){return _fbCache.deleted}
+function saveDeletedIds(d){_fbCache.deleted=d;_saveField('deleted',d)}
+function getEditedMap(){return _fbCache.edited}
+function saveEditedMap(d){_fbCache.edited=d;_saveField('edited',d)}
+function getBairros(){return _fbCache.bairros&&_fbCache.bairros.length?_fbCache.bairros:['Centro']}
+function saveBairros(d){_fbCache.bairros=d;_saveField('bairros',d)}
+function insKey(id){return String(id)}
+function getStatusFor(id){
+  const recs=getInspections()[insKey(id)];
+  if(!recs||!recs.length)return'pendente';
+  return recs[recs.length-1].status;
+}
+function getLastInspection(id){
+  const recs=getInspections()[insKey(id)];
+  return recs&&recs.length?recs[recs.length-1]:null;
+}
+function rebuildDADOS(){
+  const del=getDeletedIds().map(String),ed=getEditedMap(),cu=getCustom();
+  let base=_DADOS_ORIGINAL.filter(r=>!del.includes(String(r.id)));
+  base=base.map(r=>ed[String(r.id)]?{...r,...ed[String(r.id)]}:r);
+  DADOS.length=0;[...base,...cu].forEach(r=>DADOS.push(r));
+}
+
+// ═══════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════
+function esc(s){if(s==null)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function formatDate(d){
+  if(!d)return'—';
+  try{const p=d.toString().slice(0,10).split('-');if(p.length===3)return p[2]+'/'+p[1]+'/'+p[0]}catch{}
+  return d;
+}
+function daysUntil(d){
+  const now=new Date();now.setHours(0,0,0,0);
+  return Math.ceil((new Date(d+'T00:00:00')-now)/86400000);
+}
+function mToast(msg,type='success'){
+  const w=document.getElementById('mToastWrap');
+  const t=document.createElement('div');
+  t.className='m-toast '+type;
+  t.textContent=(type==='success'?'✅ ':'❌ ')+msg;
+  w.appendChild(t);
+  setTimeout(()=>{t.style.animation='toastOut .3s forwards';setTimeout(()=>t.remove(),300)},3200);
+}
+function mStatusBadge(st){
+  const map={fiscalizado:'mb-fiscalizado',pendente:'mb-pendente',irregular:'mb-irregular'};
+  const label={fiscalizado:'✅ Fiscalizado',pendente:'⏳ Pendente',irregular:'❌ Irregular'};
+  return`<span class="m-badge ${map[st]||''}">${label[st]||st}</span>`;
+}
+function mRiskBadge(r){
+  if(!r)return'<span class="m-badge" style="background:#f5f0f2;color:#b08090">—</span>';
+  if(r.includes('BAIXO'))return'<span class="m-badge mb-baixo">🟢 Baixo</span>';
+  if(r.includes('ALTO'))return'<span class="m-badge mb-alto">🔴 Alto</span>';
+  return'<span class="m-badge">'+esc(r)+'</span>';
+}
+
+// ═══════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════
+function mNavigate(pg){
+  mCurrentPage=pg;
+  document.querySelectorAll('.m-page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('mpage-'+pg)?.classList.add('active');
+  document.querySelectorAll('.m-nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('mnav-'+pg)?.classList.add('active');
+  const titles={dashboard:'Dashboard',estabelecimentos:'Estabelecimentos',fiscalizacoes:'Fiscalizações',mais:'Mais'};
+  document.getElementById('mHeaderTitle').textContent=titles[pg]||pg;
+  if(pg==='dashboard')mRenderDashboard();
+  if(pg==='estabelecimentos'){mEstabOffset=0;mRenderEstab();}
+  if(pg==='fiscalizacoes')mRenderFisc();
+  if(pg==='mais'){mRenderAgents();mRenderBairroTags();mRefreshRelBairro();mLoadConfig();}
+}
+
+// ═══════════════════════════════════════════════════════
+// BOTTOM SHEETS
+// ═══════════════════════════════════════════════════════
+function mOpenBS(id){document.getElementById(id).classList.add('open');document.body.style.overflow='hidden'}
+function mCloseBS(id){document.getElementById(id).classList.remove('open');document.body.style.overflow=''}
+
+// ═══════════════════════════════════════════════════════
+// DASHBOARD
+// ═══════════════════════════════════════════════════════
+function mRenderDashboard(){
+  let fisc=0,reg=0;
+  DADOS.forEach(r=>{const st=getStatusFor(r.id);if(st!=='pendente')fisc++;if(st==='fiscalizado')reg++;});
+  document.getElementById('mStatTotal').textContent=DADOS.length;
+  document.getElementById('mStatFisc').textContent=fisc;
+  document.getElementById('mStatReg').textContent=reg;
+  document.getElementById('mStatPend').textContent=DADOS.length-fisc;
+  document.getElementById('mBadgeTotal').textContent=DADOS.length;
+
+  // Alert
+  const pend=DADOS.length-fisc;
+  const alertEl=document.getElementById('mAlertBanner');
+  if(pend>0&&getConfig().semFisc){
+    alertEl.innerHTML=`<div class="m-alert">⚠️ <div class="m-alert-text"><strong>${pend}</strong> estabelecimento${pend>1?'s':''} sem vistoria</div><button class="m-alert-btn" onclick="mNavigate('estabelecimentos');mFilters.status='pendente';document.getElementById('mFilterStatus').value='pendente';mApplyFilters()">Ver</button></div>`;
+  } else {alertEl.innerHTML='';}
+
+  // Bairros chart
+  const bairros={};DADOS.forEach(r=>{const k=r.bairro||'N/I';bairros[k]=(bairros[k]||0)+1;});
+  const bMax=Math.max(1,...Object.values(bairros));
+  document.getElementById('mBairroChart').innerHTML=Object.entries(bairros).sort((a,b)=>b[1]-a[1]).slice(0,7).map(([n,c])=>`
+    <div class="m-bar"><div class="m-bar-row"><span>${esc(n)}</span><span>${c}</span></div>
+    <div class="m-bar-track"><div class="m-bar-fill" style="width:${(c/bMax*100).toFixed(1)}%"></div></div></div>`).join('');
+
+  // Risco
+  const riscos={'BAIXO RISCO':0,'ALTO RISCO':0,'Não informado':0};
+  DADOS.forEach(r=>{if(r.classe_risco==='BAIXO RISCO')riscos['BAIXO RISCO']++;else if(r.classe_risco==='ALTO RISCO')riscos['ALTO RISCO']++;else riscos['Não informado']++;});
+  const rc={'BAIXO RISCO':'#22c55e','ALTO RISCO':'#ef4444','Não informado':'#d1c0c8'};
+  document.getElementById('mRiscoChart').innerHTML=Object.entries(riscos).map(([n,c])=>`
+    <div class="m-pie-row"><div class="m-pie-dot" style="background:${rc[n]}"></div><div class="m-pie-name">${n}</div><div class="m-pie-val">${c}</div></div>`).join('');
+
+  // Categorias
+  const cats={};DADOS.forEach(r=>{if(r.categoria)cats[r.categoria]=(cats[r.categoria]||0)+1;});
+  const topCats=Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const cMax=topCats[0]?.[1]||1;
+  document.getElementById('mCatChart').innerHTML=topCats.length?topCats.map(([n,c])=>`
+    <div class="m-bar"><div class="m-bar-row"><span style="font-size:11px">${esc(n)}</span><span>${c}</span></div>
+    <div class="m-bar-track"><div class="m-bar-fill" style="width:${(c/cMax*100).toFixed(1)}%"></div></div></div>`).join('')
+    :'<div style="color:var(--text3);font-size:13px">Nenhuma categoria.</div>';
+
+  // Vencimentos
+  const now=new Date();now.setHours(0,0,0,0);const future=new Date();future.setDate(future.getDate()+60);
+  const soon=DADOS.filter(r=>{if(!r.ultimo_licenciamento)return false;const d=new Date(r.ultimo_licenciamento+'T00:00:00');return d>=now&&d<=future;}).sort((a,b)=>a.ultimo_licenciamento.localeCompare(b.ultimo_licenciamento)).slice(0,5);
+  document.getElementById('mVencList').innerHTML=soon.length?soon.map(r=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <div><div style="font-weight:600;font-size:13px">${esc(r.nome_fantasia)}</div><div style="font-size:11px;color:var(--text3)">${esc(r.bairro)}</div></div>
+      <div style="text-align:right"><div style="font-size:12px;font-weight:700;color:var(--warning)">${formatDate(r.ultimo_licenciamento)}</div><div style="font-size:10px;color:var(--text3)">${daysUntil(r.ultimo_licenciamento)} dias</div></div>
+    </div>`).join('')
+    :'<div style="text-align:center;color:var(--text3);font-size:13px;padding:16px">Nenhum nos próximos 60 dias</div>';
+}
+
+// ═══════════════════════════════════════════════════════
+// ESTABELECIMENTOS
+// ═══════════════════════════════════════════════════════
+function mFilteredEstab(){
+  const q=mFilters.q.toLowerCase().trim();
+  return DADOS.filter(r=>{
+    if(mFilters.bairro&&r.bairro!==mFilters.bairro)return false;
+    if(mFilters.risco&&r.classe_risco!==mFilters.risco)return false;
+    if(mFilters.status&&getStatusFor(r.id)!==mFilters.status)return false;
+    if(q){const hay=[r.nome_fantasia,r.razao_social,r.endereco,r.categoria,r.bairro].map(v=>v||'').join(' ').toLowerCase();if(!hay.includes(q))return false;}
+    return true;
+  });
+}
+function mOnSearch(){
+  mFilters.q=document.getElementById('mSearchInput').value;
+  document.getElementById('mSearchClear').style.display=mFilters.q?'block':'none';
+  mEstabOffset=0;mRenderEstab();
+}
+function mClearSearch(){document.getElementById('mSearchInput').value='';mFilters.q='';document.getElementById('mSearchClear').style.display='none';mEstabOffset=0;mRenderEstab();}
+function mApplyFilters(){
+  mFilters.bairro=document.getElementById('mFilterBairro').value;
+  mFilters.status=document.getElementById('mFilterStatus').value;
+  mFilters.risco=document.getElementById('mFilterRisco').value;
+  mEstabOffset=0;mRenderEstab();
+}
+function mRenderEstab(){
+  const data=mFilteredEstab();
+  document.getElementById('mEstabCount').textContent=data.length+' resultado'+(data.length!==1?'s':'');
+  const slice=data.slice(0,mEstabOffset+M_PAGE_SIZE);
+  const list=document.getElementById('mEstabList');
+  if(!data.length){
+    list.innerHTML=`<div class="m-empty"><div class="m-empty-icon">🔍</div><div class="m-empty-title">Nenhum resultado</div><div class="m-empty-text">Tente outros filtros.</div></div>`;
+    document.getElementById('mEstabLoadMore').style.display='none';
+    return;
+  }
+  list.innerHTML=slice.map(r=>{
+    const st=getStatusFor(r.id);
+    return`<div class="m-estab-card">
+      <div class="m-card-body" onclick="mOpenDetail(${r.id})">
+        <div class="m-card-name">${esc(r.nome_fantasia)}</div>
+        <div class="m-card-razao">${esc(r.razao_social)||'—'}</div>
+        <div class="m-card-meta">
+          ${r.bairro?`<span class="m-badge mb-bairro">📍 ${esc(r.bairro)}</span>`:''}
+          ${mRiskBadge(r.classe_risco)}
+          ${mStatusBadge(st)}
+        </div>
+      </div>
+      <div class="m-card-actions">
+        <button class="m-card-action-btn" onclick="mOpenDetail(${r.id})"><span class="m-card-action-icon">👁️</span>Detalhes</button>
+        <button class="m-card-action-btn" onclick="mOpenInspect(${r.id})"><span class="m-card-action-icon">🔍</span>Fiscalizar</button>
+        <button class="m-card-action-btn" onclick="mOpenEditEstab(${r.id})"><span class="m-card-action-icon">✏️</span>Editar</button>
+        <button class="m-card-action-btn" onclick="mDeleteEstab(${r.id})" style="color:var(--danger)"><span class="m-card-action-icon">🗑️</span>Excluir</button>
+      </div>
+    </div>`;
+  }).join('');
+  const lm=document.getElementById('mEstabLoadMore');
+  lm.style.display=(data.length>mEstabOffset+M_PAGE_SIZE)?'block':'none';
+  if(lm.style.display==='block')lm.querySelector('button').textContent=`Carregar mais (${data.length-(mEstabOffset+M_PAGE_SIZE)} restantes)`;
+}
+function mLoadMoreEstab(){mEstabOffset+=M_PAGE_SIZE;mRenderEstab();}
+
+// ── DETAIL ──────────────────────────────────────────────
+function mOpenDetail(id){
+  const r=DADOS.find(d=>d.id===id);if(!r)return;
+  const st=getStatusFor(id);
+  document.getElementById('bsDetailNome').textContent=r.nome_fantasia;
+  document.getElementById('bsDetailBadges').innerHTML=
+    `${r.bairro?`<span class="m-badge mb-bairro">📍 ${esc(r.bairro)}</span>`:''}
+     ${r.categoria?`<span class="m-badge mb-cat">${esc(r.categoria)}</span>`:''}
+     ${mRiskBadge(r.classe_risco)}${mStatusBadge(st)}`;
+  document.getElementById('bsDetailInfo').innerHTML=`
+    <div class="detail-field"><div class="detail-label">Razão Social</div><div class="detail-value">${esc(r.razao_social)||'—'}</div></div>
+    <div class="detail-field"><div class="detail-label">Endereço</div><div class="detail-value">${esc(r.endereco)||'—'}</div></div>
+    <div class="detail-field"><div class="detail-label">Atividade</div><div class="detail-value">${esc(r.tipo_atividade)||'—'}</div></div>
+    <div class="detail-field"><div class="detail-label">CNAE</div><div class="detail-value">${esc(r.cnae)||'—'}</div></div>
+    <div class="detail-field"><div class="detail-label">Licença</div><div class="detail-value">${formatDate(r.ultimo_licenciamento)}</div></div>
+    <div class="detail-field"><div class="detail-label">Órgão</div><div class="detail-value">${esc(r.orgao_licenciador)||'—'}</div></div>`;
+  const recs=(getInspections()[insKey(id)]||[]).slice().reverse();
+  document.getElementById('bsDetailHistory').innerHTML=recs.length
+    ?recs.map(rec=>`<div class="m-hist-item ${rec.status}">
+        <div class="m-hist-date">${formatDate(rec.date)}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between"><div class="m-hist-agent">👤 ${esc(rec.agent)}</div>${mStatusBadge(rec.status)}</div>
+        ${rec.obs?`<div class="m-hist-obs">${esc(rec.obs)}</div>`:''}
+      </div>`).join('')
+    :'<div class="m-empty" style="padding:20px"><div class="m-empty-icon" style="font-size:32px">📋</div><div class="m-empty-text">Nenhuma fiscalização registrada.</div></div>';
+  document.getElementById('bsDetailInspBtn').onclick=()=>{mCloseBS('bsDetail');mOpenInspect(id);};
+  mOpenBS('bsDetail');
+}
+
+// ── INSPECT ─────────────────────────────────────────────
+function mOpenInspect(id){
+  const r=DADOS.find(d=>d.id===id);
+  mCurrentInspectId=id;
+  document.getElementById('bsInspectNome').textContent=r?r.nome_fantasia:'—';
+  document.getElementById('mInspDate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('mInspStatus').value='fiscalizado';
+  document.getElementById('mInspObs').value='';
+  const agents=getAgents();
+  const sel=document.getElementById('mInspAgent');
+  sel.innerHTML=!agents.length?'<option value="">⚠️ Cadastre agentes em Configurações</option>'
+    :'<option value="">Selecionar agente…</option>'+agents.map(a=>`<option value="${esc(a.name)}">${esc(a.name)}${a.role?' — '+esc(a.role):''}</option>`).join('');
+  mOpenBS('bsInspect');
+}
+function mSaveInspection(){
+  const date=document.getElementById('mInspDate').value;
+  const agent=document.getElementById('mInspAgent').value;
+  const status=document.getElementById('mInspStatus').value;
+  const obs=document.getElementById('mInspObs').value.trim();
+  if(!date){mToast('Informe a data!','error');return;}
+  if(!agent){mToast('Selecione o agente!','error');return;}
+  const ins=getInspections();
+  const key=insKey(mCurrentInspectId);
+  if(!ins[key])ins[key]=[];
+  ins[key].push({date,agent,status,obs,savedAt:new Date().toISOString()});
+  saveInspections(ins);
+  mCloseBS('bsInspect');
+  mToast('Fiscalização registrada! ✅');
+  mRefreshAll();
+}
+
+// ── ADD/EDIT ESTAB ───────────────────────────────────────
+function mRefreshEstabBairroSelect(){
+  const bairros=getBairros();
+  const opts=bairros.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  const sel=document.getElementById('mEstBairro');
+  if(sel){const cur=sel.value;sel.innerHTML='<option value="">Selecionar…</option>'+opts;if(cur)sel.value=cur;}
+}
+function mInitCatDatalist(){
+  const cats=[...new Set(DADOS.map(r=>r.categoria).filter(Boolean))].sort();
+  const dl=document.getElementById('mCatList');
+  if(dl)dl.innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
+}
+function mOpenAddEstab(){
+  mCurrentEditId=null;
+  document.getElementById('bsEstabTitle').textContent='＋ Novo Estabelecimento';
+  ['mEstNome','mEstRazao','mEstEndereco','mEstCategoria','mEstAtividade','mEstCnae','mEstOrgao'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('mEstBairro').value='';
+  document.getElementById('mEstRisco').value='';
+  document.getElementById('mEstLicenca').value='';
+  mRefreshEstabBairroSelect();mInitCatDatalist();
+  mOpenBS('bsEstab');
+}
+function mOpenEditEstab(id){
+  const r=DADOS.find(d=>d.id===id);if(!r)return;
+  mCurrentEditId=id;
+  document.getElementById('bsEstabTitle').textContent='✏️ Editar Estabelecimento';
+  mRefreshEstabBairroSelect();mInitCatDatalist();
+  document.getElementById('mEstNome').value=r.nome_fantasia||'';
+  document.getElementById('mEstRazao').value=r.razao_social||'';
+  document.getElementById('mEstEndereco').value=r.endereco||'';
+  document.getElementById('mEstBairro').value=r.bairro||'';
+  document.getElementById('mEstCategoria').value=r.categoria||'';
+  document.getElementById('mEstAtividade').value=r.tipo_atividade||'';
+  document.getElementById('mEstCnae').value=r.cnae||'';
+  document.getElementById('mEstRisco').value=r.classe_risco||'';
+  document.getElementById('mEstLicenca').value=r.ultimo_licenciamento?.slice(0,10)||'';
+  document.getElementById('mEstOrgao').value=r.orgao_licenciador||'';
+  mOpenBS('bsEstab');
+}
+function mSaveEstab(){
+  const nome=document.getElementById('mEstNome').value.trim();
+  const bairro=document.getElementById('mEstBairro').value;
+  if(!nome){mToast('Informe o Nome Fantasia!','error');return;}
+  if(!bairro){mToast('Selecione o Bairro!','error');return;}
+  const payload={
+    nome_fantasia:nome,razao_social:document.getElementById('mEstRazao').value.trim(),
+    endereco:document.getElementById('mEstEndereco').value.trim(),bairro,
+    categoria:document.getElementById('mEstCategoria').value.trim().toUpperCase(),
+    tipo_atividade:document.getElementById('mEstAtividade').value.trim().toUpperCase(),
+    cnae:document.getElementById('mEstCnae').value.trim(),
+    classe_risco:document.getElementById('mEstRisco').value,
+    ultimo_licenciamento:document.getElementById('mEstLicenca').value||'',
+    orgao_licenciador:document.getElementById('mEstOrgao').value.trim(),
+  };
+  if(mCurrentEditId!==null){
+    const ed=getEditedMap();ed[String(mCurrentEditId)]={...ed[String(mCurrentEditId)],...payload};saveEditedMap(ed);
+    mToast('Estabelecimento atualizado! ✅');
+  } else {
+    const cu=getCustom();cu.push({id:Date.now(),...payload});saveCustom(cu);
+    mToast('Estabelecimento adicionado! ✅');
+  }
+  rebuildDADOS();mCloseBS('bsEstab');mEstabOffset=0;mRefreshAll();
+}
+function mDeleteEstab(id){
+  const r=DADOS.find(d=>d.id===id);
+  mPendingDelId=id;
+  document.getElementById('bsDelNome').textContent=r?r.nome_fantasia:'ID '+id;
+  mOpenBS('bsConfirmDel');
+}
+function mConfirmDelete(){
+  const id=mPendingDelId;if(id===null)return;
+  if(_DADOS_ORIGINAL.some(r=>r.id===id)){
+    const del=getDeletedIds();if(!del.includes(id)){del.push(id);saveDeletedIds(del);}
+    const ed=getEditedMap();delete ed[String(id)];saveEditedMap(ed);
+  } else {saveCustom(getCustom().filter(r=>r.id!==id));}
+  const ins=getInspections();delete ins[insKey(id)];saveInspections(ins);
+  rebuildDADOS();mCloseBS('bsConfirmDel');mToast('Estabelecimento excluído.','success');
+  mEstabOffset=0;mRefreshAll();mPendingDelId=null;
+}
+
+// ═══════════════════════════════════════════════════════
+// FISCALIZAÇÕES
+// ═══════════════════════════════════════════════════════
+function mSetFiscFilter(v){
+  mFiscFilter=v;
+  ['fpAll','fpFisc','fpPend','fpIrreg'].forEach(id=>document.getElementById(id)?.classList.remove('active'));
+  const map={'':'fpAll',fiscalizado:'fpFisc',pendente:'fpPend',irregular:'fpIrreg'};
+  document.getElementById(map[v])?.classList.add('active');
+  mRenderFisc();
+}
+function mRenderFisc(){
+  const ins=getInspections();
+  const q=(document.getElementById('mFiscSearch')?.value||'').toLowerCase().trim();
+  let rows=[];
+  Object.entries(ins).forEach(([key,recs])=>{
+    const numId=Number(key);const estab=DADOS.find(d=>d.id===numId)||null;
+    recs.forEach(rec=>rows.push({estab,rec,id:numId}));
+  });
+  if(mFiscFilter)rows=rows.filter(r=>r.rec.status===mFiscFilter);
+  if(q)rows=rows.filter(r=>{const hay=[r.estab?.nome_fantasia||'',r.rec.agent||'',r.estab?.bairro||'',r.rec.obs||''].join(' ').toLowerCase();return hay.includes(q);});
+  rows.sort((a,b)=>(b.rec.date||'').localeCompare(a.rec.date||''));
+  document.getElementById('mFiscCount').textContent=rows.length+' registro'+(rows.length!==1?'s':'');
+  const list=document.getElementById('mFiscList');
+  if(!rows.length){
+    list.innerHTML=`<div class="m-empty"><div class="m-empty-icon">📋</div><div class="m-empty-title">Nenhuma fiscalização</div><div class="m-empty-text">Registre vistorias na lista de estabelecimentos.</div></div>`;
+    return;
+  }
+  list.innerHTML=rows.map(({estab,rec,id})=>`
+    <div class="m-fisc-card" onclick="mOpenDetail(${id})">
+      <div class="m-fisc-nome">${esc(estab?.nome_fantasia||'ID '+id)}</div>
+      <div class="m-fisc-meta">
+        ${estab?.bairro?`<span class="m-badge mb-bairro">📍 ${esc(estab.bairro)}</span>`:''}
+        ${mStatusBadge(rec.status)}
+        <span class="m-fisc-date">📅 ${formatDate(rec.date)}</span>
+      </div>
+      <div class="m-fisc-agent">👤 ${esc(rec.agent)}</div>
+      ${rec.obs?`<div class="m-fisc-obs">${esc(rec.obs)}</div>`:''}
+    </div>`).join('');
+}
+
+// ═══════════════════════════════════════════════════════
+// RELATÓRIOS
+// ═══════════════════════════════════════════════════════
+function mRefreshRelBairro(){
+  const bairros=getBairros();
+  const opts=bairros.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  const sel=document.getElementById('mRelBairro');
+  if(sel){const cur=sel.value;sel.innerHTML='<option value="">Todos</option>'+opts;if(cur)sel.value=cur;}
+}
+function mGerarRelatorio(){
+  const bairro=document.getElementById('mRelBairro').value;
+  const status=document.getElementById('mRelStatus').value;
+  const risco=document.getElementById('mRelRisco').value;
+  const res=DADOS.filter(r=>{
+    if(bairro&&r.bairro!==bairro)return false;
+    if(risco&&r.classe_risco!==risco)return false;
+    if(status&&getStatusFor(r.id)!==status)return false;
+    return true;
+  });
+  let fisc=0,irreg=0,pend=0;
+  res.forEach(r=>{const st=getStatusFor(r.id);if(st==='fiscalizado')fisc++;else if(st==='irregular')irreg++;else pend++;});
+  document.getElementById('mRelTotal').textContent=res.length;
+  document.getElementById('mRelFisc').textContent=fisc;
+  document.getElementById('mRelIrreg').textContent=irreg;
+  document.getElementById('mRelPend').textContent=pend;
+  const list=document.getElementById('mRelList');
+  list.innerHTML=res.length?res.map((r,i)=>{
+    const st=getStatusFor(r.id);const last=getLastInspection(r.id);
+    return`<div class="m-report-row-item">
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px">${esc(r.nome_fantasia)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px">${esc(r.bairro)||'—'} · ${esc(r.categoria)||'—'}</div>
+      </div>
+      <div style="text-align:right;flex-shrink:0">${mStatusBadge(st)}<div style="font-size:10px;color:var(--text3);margin-top:4px">${last?formatDate(last.date):'—'}</div></div>
+    </div>`;}).join('')
+    :'<div style="text-align:center;color:var(--text3);font-size:13px;padding:20px">Nenhum resultado</div>';
+  document.getElementById('mRelResultContainer').style.display='block';
+}
+
+// ═══════════════════════════════════════════════════════
+// CONFIGURAÇÕES
+// ═══════════════════════════════════════════════════════
+function mLoadConfig(){
+  const cfg=getConfig();
+  document.getElementById('mTogLicenca').checked=cfg.licenca!==false;
+  document.getElementById('mTogSemFisc').checked=cfg.semFisc!==false;
+}
+function mSaveConfig(){
+  _fbCache.config={
+    licenca:document.getElementById('mTogLicenca').checked,
+    semFisc:document.getElementById('mTogSemFisc').checked
+  };
+  _saveField('config',_fbCache.config);
+}
+
+// Agentes
+function mRenderAgents(){
+  const agents=getAgents();const list=document.getElementById('mAgentList');if(!list)return;
+  if(!agents.length){list.innerHTML='<div style="padding:16px;text-align:center;color:var(--text3);font-size:13px">Nenhum agente cadastrado.</div>';return;}
+  list.innerHTML=agents.map((a,i)=>`
+    <div class="m-agent-chip">
+      <div class="m-agent-avatar">👤</div>
+      <div class="m-agent-info"><div class="m-agent-name">${esc(a.name)}</div><div class="m-agent-role">${esc(a.role)||'Agente Fiscal'}</div></div>
+      <button class="m-agent-del" onclick="mRemoveAgent(${i})">🗑️</button>
+    </div>`).join('');
+}
+function mAddAgent(){
+  const name=document.getElementById('mNewAgentName').value.trim();
+  const role=document.getElementById('mNewAgentRole').value.trim();
+  if(!name){mToast('Informe o nome!','error');return;}
+  const agents=getAgents();agents.push({name,role:role||'Agente Fiscal'});saveAgents(agents);
+  document.getElementById('mNewAgentName').value='';document.getElementById('mNewAgentRole').value='';
+  mRenderAgents();mToast('Agente adicionado! ✅');
+}
+function mRemoveAgent(i){const agents=getAgents();agents.splice(i,1);saveAgents(agents);mRenderAgents();mToast('Agente removido.');}
+
+// Bairros
+function mRefreshAllBairros(){
+  const bairros=getBairros();
+  const opts=bairros.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
+  ['mFilterBairro','mRelBairro','mEstBairro'].forEach(id=>{
+    const el=document.getElementById(id);if(!el)return;
+    const cur=el.value;
+    const prefix=id==='mEstBairro'?'<option value="">Selecionar…</option>':'<option value="">Todos</option>';
+    if(id==='mFilterBairro')el.innerHTML='<option value="">Todos os bairros</option>'+opts;
+    else el.innerHTML=prefix+opts;
+    if(cur)el.value=cur;
+  });
+}
+function mRenderBairroTags(){
+  const list=document.getElementById('mBairroTags');if(!list)return;
+  const bairros=getBairros();
+  if(!bairros.length){list.innerHTML='<span style="font-size:13px;color:var(--text3)">Nenhum bairro cadastrado.</span>';return;}
+  list.innerHTML=bairros.map((b,i)=>`<span class="m-bairro-tag">📍 ${esc(b)}<button onclick="mRemoveBairro(${i})">✕</button></span>`).join('');
+}
+function mAddBairro(){
+  const input=document.getElementById('mNewBairro');const name=input?.value.trim();
+  if(!name){mToast('Informe o nome!','error');return;}
+  const bairros=getBairros();
+  if(bairros.some(b=>b.toLowerCase()===name.toLowerCase())){mToast('Bairro já existe!','error');return;}
+  bairros.push(name);saveBairros(bairros);if(input)input.value='';
+  mRenderBairroTags();mRefreshAllBairros();mToast('Bairro adicionado! ✅');
+}
+function mRemoveBairro(i){
+  const bairros=getBairros();const nome=bairros[i];
+  const vinc=DADOS.filter(d=>d.bairro===nome).length;
+  if(vinc>0){mToast(`Não é possível: ${vinc} estabelecimento${vinc>1?'s':''} vinculado${vinc>1?'s':''} a "${nome}".`,'error');return;}
+  mPendingDelBairroIdx=i;
+  document.getElementById('bsDelBairroNome').textContent=nome;
+  mOpenBS('bsConfirmDelBairro');
+}
+function mConfirmRemoveBairro(){
+  const i=mPendingDelBairroIdx;if(i===null)return;
+  const bairros=getBairros();bairros.splice(i,1);saveBairros(bairros);
+  mRenderBairroTags();mRefreshAllBairros();mCloseBS('bsConfirmDelBairro');
+  mToast('Bairro removido.');mPendingDelBairroIdx=null;
+}
+
+// Backup
+function mBackupData(){
+  const payload={establishments:DADOS,inspections:getInspections(),agents:getAgents(),config:getConfig(),custom:getCustom(),deleted:getDeletedIds(),edited:getEditedMap(),bairros:getBairros()};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download='visa-careiro-backup-'+new Date().toISOString().slice(0,10)+'.json';a.click();
+  mToast('Backup exportado!');
+}
+function mDoImport(e){
+  const file=e.target.files?.[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{
+    try{
+      const d=JSON.parse(ev.target.result);
+      if(d.custom)saveCustom(d.custom);
+      if(d.deleted)saveDeletedIds(d.deleted);
+      if(d.edited)saveEditedMap(d.edited);
+      if(d.inspections)saveInspections(d.inspections);
+      if(d.agents)saveAgents(d.agents);
+      if(d.bairros)saveBairros(d.bairros);
+      rebuildDADOS();mRefreshAll();mToast('Backup restaurado! ✅');
+    }catch{mToast('Erro ao importar o arquivo.','error');}
+  };reader.readAsText(file);
+}
+
+// ═══════════════════════════════════════════════════════
+// GLOBAL REFRESH
+// ═══════════════════════════════════════════════════════
+function mRefreshAll(){
+  document.getElementById('mBadgeTotal').textContent=DADOS.length;
+  // nav dot for pending
+  const pend=DADOS.filter(r=>getStatusFor(r.id)==='pendente').length;
+  document.getElementById('mNavDotEstab')?.classList.toggle('show',pend>0);
+  if(mCurrentPage==='dashboard')mRenderDashboard();
+  if(mCurrentPage==='estabelecimentos')mRenderEstab();
+  if(mCurrentPage==='fiscalizacoes')mRenderFisc();
+}
+
+// ═══════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════
+async function mBoot(){
+  try{
+    const snap=await _STATE_REF.get();
+    if(snap.exists){
+      const d=snap.data();
+      if(d.inspections)_fbCache.inspections=d.inspections;
+      if(d.agents)_fbCache.agents=d.agents;
+      if(d.config)_fbCache.config=d.config;
+      if(d.custom)_fbCache.custom=d.custom;
+      if(d.deleted)_fbCache.deleted=d.deleted;
+      if(d.edited)_fbCache.edited=d.edited;
+      if(d.bairros)_fbCache.bairros=d.bairros;
+    }
+  }catch(e){console.warn('Firestore unavailable',e);mToast('⚠️ Sem conexão com a nuvem.','error');}
+
+  let raw=[];
+  try{
+    const baseSnap=await _BASE_REF.get();
+    if(baseSnap.exists){const bd=baseSnap.data();if(Array.isArray(bd.estabelecimentos))raw=bd.estabelecimentos;}
+  }catch(e){console.warn('Erro ao carregar dados base:',e);}
+  _DADOS_ORIGINAL.length=0;raw.forEach(r=>_DADOS_ORIGINAL.push(r));
+  rebuildDADOS();
+
+  // Hide splash, show app
+  const splash=document.getElementById('splash');
+  const app=document.getElementById('app');
+  setTimeout(()=>{
+    splash.classList.add('hide');
+    app.style.display='flex';
+    setTimeout(()=>{splash.style.display='none';},420);
+    mRefreshAllBairros();
+    mRenderDashboard();
+  },800);
+}
+
+// Register Service Worker
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js').catch(e=>console.warn('SW:',e));
+}
+
+mBoot();
+</script>
+</body>
+</html>
