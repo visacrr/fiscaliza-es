@@ -170,7 +170,7 @@ body {
 .filter-select:focus { border-color: var(--rosa-dark); }
 
 /* ─── STATS CARDS — GLASS ─────────────────────────────── */
-.stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; margin: 24px 0; }
+.stats-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 18px; margin: 24px 0; }
 .stat-card {
   background: rgba(255,255,255,0.6);
   backdrop-filter: var(--glass-blur);
@@ -287,6 +287,12 @@ tr:hover td { background: rgba(249,184,200,0.12); }
 .action-btn.edit:hover    { background: #3a7dc9; color: white; }
 .action-btn.del     { background: var(--danger-bg); color: var(--danger); }
 .action-btn.del:hover     { background: var(--danger); color: white; }
+.action-btn.deactivate { background: rgba(255,244,224,0.8); color: #7a4e00; }
+.action-btn.deactivate:hover { background: var(--warning); color: white; }
+.action-btn.activate { background: var(--success-bg); color: #2d7a4f; }
+.action-btn.activate:hover { background: var(--success); color: white; }
+.badge-ativo   { background: var(--success-bg); color: #2a6e47; }
+.badge-inativo { background: var(--danger-bg);  color: var(--danger); }
 
 .pagination { padding: 16px 22px; border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
 .pagination-info { font-size: 13px; color: var(--text-muted); }
@@ -423,7 +429,7 @@ input:checked + .slider::before { transform: translateX(18px); }
 
 /* Stats grid sempre 4 colunas no desktop */
 @media (min-width: 1280px) {
-  .stats-grid { grid-template-columns: repeat(4, 1fr); }
+  .stats-grid { grid-template-columns: repeat(5, 1fr); }
   .dash-grid  { grid-template-columns: 1fr 1fr; }
 }
 
@@ -574,6 +580,7 @@ input:checked + .slider::before { transform: translateX(18px); }
   <div class="nav-section">Menu Principal</div>
   <button class="nav-item active" data-page="dashboard"        onclick="navigate('dashboard')"><span class="icon">📊</span> Dashboard</button>
   <button class="nav-item"        data-page="estabelecimentos" onclick="navigate('estabelecimentos')"><span class="icon">🏪</span> Estabelecimentos</button>
+  <button class="nav-item"        data-page="inativos"         onclick="navigate('inativos')"><span class="icon">🚫</span> Inativos</button>
   <button class="nav-item"        data-page="fiscalizacao"     onclick="navigate('fiscalizacao')"><span class="icon">🔍</span> Fiscalizações</button>
 
   <div class="nav-section">Sistema</div>
@@ -603,7 +610,6 @@ input:checked + .slider::before { transform: translateX(18px); }
 
     <!-- ═══════════ DASHBOARD ═══════════ -->
     <div class="page active" id="page-dashboard">
-      <div id="alertStrip"></div>
       <div class="stats-grid">
         <div class="stat-card rosa">
           <div class="stat-icon">🏪</div>
@@ -628,6 +634,12 @@ input:checked + .slider::before { transform: translateX(18px); }
           <div class="stat-label">Pendentes</div>
           <div class="stat-value" id="statPendente">0</div>
           <div class="stat-sub">Sem vistoria registrada</div>
+        </div>
+        <div class="stat-card" style="--card-accent:#b08090">
+          <div class="stat-icon">🚫</div>
+          <div class="stat-label">Inativos</div>
+          <div class="stat-value" id="statInativos" style="color:var(--text-muted)">0</div>
+          <div class="stat-sub">Estabelecimentos desativados</div>
         </div>
       </div>
 
@@ -672,10 +684,9 @@ input:checked + .slider::before { transform: translateX(18px); }
           <option value="ALTO RISCO">Alto Risco</option>
         </select>
         <select class="filter-select" id="filterStatus" onchange="onFilterStatus()">
-          <option value="">Todos os status</option>
-          <option value="fiscalizado">Fiscalizado</option>
-          <option value="pendente">Pendente</option>
-          <option value="irregular">Irregular</option>
+          <option value="">Todos</option>
+          <option value="ativo">✅ Ativo</option>
+          <option value="inativo">🚫 Inativo</option>
         </select>
         <button class="btn btn-ghost btn-sm" onclick="resetEstabFilters()" title="Limpar todos os filtros" style="border-radius:50px;padding:6px 14px;font-size:12px">↺ Resetar</button>
       </div>
@@ -699,7 +710,7 @@ input:checked + .slider::before { transform: translateX(18px); }
                 <th>Bairro</th>
                 <th>Categoria</th>
                 <th>Risco</th>
-                <th>Status</th>
+                <th>Situação</th>
                 <th>Ações</th>
               </tr>
             </thead>
@@ -715,46 +726,146 @@ input:checked + .slider::before { transform: translateX(18px); }
 
     <!-- ═══════════ FISCALIZAÇÕES ═══════════ -->
     <div class="page" id="page-fiscalizacao">
-      <div class="search-container">
-        <span class="search-icon">🔍</span>
-        <input class="search-input" id="searchFisc" type="text" placeholder="Buscar fiscalização por estabelecimento, equipe..." oninput="renderFiscalizacoes()">
-      </div>
-      <div class="filters-row" style="margin-top:14px">
-        <button class="filter-chip active" onclick="setFiscFilter('')">Todos</button>
-        <button class="filter-chip" onclick="setFiscFilter('fiscalizado')">✅ Fiscalizado</button>
-        <button class="filter-chip" onclick="setFiscFilter('pendente')">⏳ Pendente</button>
-        <button class="filter-chip" onclick="setFiscFilter('irregular')">❌ Irregular</button>
-        <button class="btn btn-ghost btn-sm" onclick="resetFiscFilters()" title="Limpar filtros" style="border-radius:50px;padding:6px 14px;font-size:12px;margin-left:4px">↺ Resetar</button>
-      </div>
-      <div class="table-section" style="margin-top:20px">
+
+      <!-- Seção 1: Estabelecimentos para Fiscalização -->
+      <div class="table-section">
         <div class="table-header">
-          <h2>Registro de Fiscalizações</h2>
+          <h2>🏪 Estabelecimentos para Fiscalizar</h2>
           <div style="display:flex;gap:10px;align-items:center">
-            <span class="count-badge" id="fiscCount">0 registros</span>
-            <button class="btn btn-print btn-sm" onclick="imprimirFiscalizacoes()">🖨️ Imprimir</button>
+            <span class="count-badge" id="fiscEstabCount">0 estabelecimentos</span>
+          </div>
+        </div>
+        <div style="padding:14px 22px 0">
+          <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" id="searchFiscEstab" type="text" placeholder="Buscar estabelecimento..." oninput="renderFiscEstabs()">
+            <button class="search-clear" onclick="document.getElementById('searchFiscEstab').value='';renderFiscEstabs()">✕</button>
+          </div>
+          <div class="filters-row" style="margin-top:10px;margin-bottom:14px">
+            <select class="filter-select" id="fiscEstabFilterBairro" onchange="fiscEstabFilters.bairro=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todos os bairros</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterCategoria" onchange="fiscEstabFilters.categoria=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todas as categorias</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterRisco" onchange="fiscEstabFilters.risco=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todos os riscos</option>
+              <option value="BAIXO RISCO">Baixo Risco</option>
+              <option value="ALTO RISCO">Alto Risco</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterStatus" onchange="fiscEstabFilters.status=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todos os status</option>
+              <option value="fiscalizado">✅ Fiscalizado</option>
+              <option value="pendente">⏳ Pendente</option>
+              <option value="irregular">❌ Irregular</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="resetFiscEstabFilters()" style="border-radius:50px;padding:6px 14px;font-size:12px">↺ Resetar</button>
           </div>
         </div>
         <div class="table-scroll">
           <table>
             <thead>
               <tr>
-                <th>Estabelecimento</th>
+                <th>Nome Fantasia</th>
+                <th>Razão Social</th>
+                <th>Endereço</th>
                 <th>Bairro</th>
-                <th>Data</th>
-                <th>Equipe</th>
-                <th>Status</th>
-                <th>Observação</th>
+                <th>Categoria</th>
+                <th>Risco</th>
+                <th>Status Vistoria</th>
                 <th>Ações</th>
               </tr>
             </thead>
-            <tbody id="fiscTableBody"></tbody>
+            <tbody id="fiscEstabTableBody"></tbody>
           </table>
         </div>
+        <div class="pagination">
+          <div class="pagination-info" id="fiscEstabPaginationInfo"></div>
+          <div class="pagination-btns" id="fiscEstabPaginationBtns"></div>
+        </div>
       </div>
-      <div class="empty-state" id="fiscEmpty" style="display:none">
-        <div class="icon">📋</div>
-        <h3>Nenhuma fiscalização registrada</h3>
-        <p>Acesse a lista de estabelecimentos e clique em 🔍 para registrar uma vistoria.</p>
+
+      <!-- Seção 2: Registro de Fiscalizações -->
+      <div style="margin-top:28px">
+        <div class="search-container">
+          <span class="search-icon">🔍</span>
+          <input class="search-input" id="searchFisc" type="text" placeholder="Buscar fiscalização por estabelecimento, equipe..." oninput="renderFiscRegistros()">
+        </div>
+        <div class="filters-row" style="margin-top:14px">
+          <button class="filter-chip active" onclick="setFiscFilter('')">Todos</button>
+          <button class="filter-chip" onclick="setFiscFilter('fiscalizado')">✅ Fiscalizado</button>
+          <button class="filter-chip" onclick="setFiscFilter('pendente')">⏳ Pendente</button>
+          <button class="filter-chip" onclick="setFiscFilter('irregular')">❌ Irregular</button>
+          <button class="btn btn-ghost btn-sm" onclick="resetFiscFilters()" title="Limpar filtros" style="border-radius:50px;padding:6px 14px;font-size:12px;margin-left:4px">↺ Resetar</button>
+        </div>
+        <div class="table-section" style="margin-top:20px">
+          <div class="table-header">
+            <h2>Registro de Fiscalizações</h2>
+            <div style="display:flex;gap:10px;align-items:center">
+              <span class="count-badge" id="fiscCount">0 registros</span>
+              <button class="btn btn-print btn-sm" onclick="imprimirFiscalizacoes()">🖨️ Imprimir</button>
+            </div>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Estabelecimento</th>
+                  <th>Bairro</th>
+                  <th>Data</th>
+                  <th>Equipe</th>
+                  <th>Status</th>
+                  <th>Observação</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody id="fiscTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="empty-state" id="fiscEmpty" style="display:none">
+          <div class="icon">📋</div>
+          <h3>Nenhuma fiscalização registrada</h3>
+          <p>Selecione um estabelecimento acima e clique em 🔍 para registrar uma vistoria.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════ INATIVOS ═══════════ -->
+    <div class="page" id="page-inativos">
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input class="search-input" id="searchInativos" type="text" placeholder="Buscar estabelecimento inativo..." oninput="renderInativos()">
+        <button class="search-clear" onclick="document.getElementById('searchInativos').value='';renderInativos()">✕</button>
+      </div>
+      <div class="table-section" style="margin-top:20px">
+        <div class="table-header">
+          <h2>🚫 Estabelecimentos Inativos</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="count-badge" id="inativosCount">0 resultados</span>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome Fantasia</th>
+                <th>Razão Social</th>
+                <th>Endereço</th>
+                <th>Bairro</th>
+                <th>Categoria</th>
+                <th>Risco</th>
+                <th>Situação</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="inativosTableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="pagination-info" id="inativosPaginationInfo"></div>
+          <div class="pagination-btns" id="inativosPaginationBtns"></div>
+        </div>
       </div>
     </div>
 
@@ -782,10 +893,6 @@ input:checked + .slider::before { transform: translateX(18px); }
             <div><div class="switch-label">Alerta de Licença Vencendo</div><div class="switch-sub">Avisar 30 dias antes do vencimento</div></div>
             <label class="switch"><input type="checkbox" id="togLicenca" checked onchange="saveConfig()"><span class="slider"></span></label>
           </div>
-          <div class="switch-row">
-            <div><div class="switch-label">Estabelecimentos sem Fiscalização</div><div class="switch-sub">Destacar no dashboard</div></div>
-            <label class="switch"><input type="checkbox" id="togSemFisc" checked onchange="saveConfig()"><span class="slider"></span></label>
-          </div>
         </div>
 
         <!-- Bairros / Distritos -->
@@ -797,6 +904,18 @@ input:checked + .slider::before { transform: translateX(18px); }
             <button class="btn btn-primary" onclick="addBairro()">+ Adicionar</button>
           </div>
           <div class="bairro-tags" id="bairroTagList"></div>
+        </div>
+
+        <!-- Restaurar Inativos -->
+        <div class="config-card">
+          <h3>🚫 Restaurar Estabelecimentos Inativos</h3>
+          <p>Importa um arquivo <strong>.json</strong> com estabelecimentos inativos e os insere automaticamente na aba <strong>Inativos</strong>. Registros já existentes no sistema não serão duplicados.</p>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+            <button class="btn btn-primary" onclick="importInativos()">📂 Selecionar Arquivo JSON</button>
+            <span style="font-size:12px;color:var(--text-muted)">Formato: array de estabelecimentos com <code>nome_fantasia</code></span>
+          </div>
+          <input type="file" id="importInativosFile" accept=".json" style="display:none" onchange="doImportInativos(event)">
+          <div id="importInativosResult" style="display:none;margin-top:16px;padding:14px 16px;border-radius:var(--radius-sm);font-size:13px;line-height:1.7"></div>
         </div>
 
         <!-- Backup completo -->        <div class="config-card">
@@ -1023,20 +1142,20 @@ input:checked + .slider::before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- ─── MODAL CONFIRMAR EXCLUSÃO ──────────────────── -->
+<!-- ─── MODAL CONFIRMAR DESATIVAÇÃO ────────────────── -->
 <div class="overlay" id="modalConfirmDel">
   <div class="modal" style="max-width:420px">
-    <div class="modal-header" style="background:var(--danger-bg)">
-      <h2 style="color:var(--danger)">🗑️ Confirmar Exclusão</h2>
+    <div class="modal-header" style="background:var(--warning-bg)">
+      <h2 style="color:#7a4e00">🚫 Desativar Estabelecimento</h2>
       <button class="modal-close" onclick="closeModal('modalConfirmDel')">✕</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:15px;margin-bottom:6px">Tem certeza que deseja excluir:</p>
+      <p style="font-size:15px;margin-bottom:6px">Tem certeza que deseja desativar:</p>
       <p style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:16px" id="delNomeLabel">—</p>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:22px">Esta ação também removerá o histórico de fiscalizações deste estabelecimento. Não pode ser desfeita.</p>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:22px">O estabelecimento será movido para a aba <strong>Inativos</strong>. Você poderá reativá-lo a qualquer momento.</p>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="closeModal('modalConfirmDel')">Cancelar</button>
-        <button class="btn btn-danger" onclick="confirmDelete()">🗑️ Excluir definitivamente</button>
+        <button class="btn btn-amarelo" onclick="confirmDeactivate()">🚫 Desativar</button>
       </div>
     </div>
   </div>
@@ -1095,8 +1214,11 @@ let DADOS = [];
 let _DADOS_ORIGINAL = [];
 let currentPage      = 'dashboard';
 let currentEstabPage = 1;
+let currentInativosPage = 1;
+let fiscEstabPage    = 1;
 const PAGE_SIZE      = 20;
 let filters          = { q: '', bairro: '', categoria: '', risco: '', status: '' };
+let fiscEstabFilters = { q: '', bairro: '', categoria: '', risco: '', status: '' };
 let currentInspectId = null;
 let currentEditId    = null;
 let fiscFilter       = '';
@@ -1126,8 +1248,9 @@ const _fbCache = {
   config: { licenca: true, semFisc: true },
   custom: [],
   deleted: [],
+  disabled: [],
   edited: {},
-  bairros: ['Mercado Central','Centro','Bairro Novo','Vista Alegre','Novo Horizonte','Nova Esperança','Sebastião Borges']
+  bairros: ['Estrada de Autazes', 'Comunidade Boa Vista', 'Estrada do Manaquiri', 'Jacamim', 'P.A. Panelão', 'Pacatuba', 'Lago Castanho', 'Órgãos Públicos', 'UBS e Unidades de Saúde', 'Ramal Timbó', 'Comunidade Tilheiro', 'Hotéis e Pousadas', 'Lago Tilheiro', 'Purupuru', 'Purupuru Ribeirinha', 'Escolas', 'Samama', 'Lago Januacá', 'São José', 'Ramal Floresta', 'Mamori I', 'Lago Tapagem','Mercado Central','Centro','Bairro Novo','Vista Alegre','Novo Horizonte','Nova Esperança','Sebastião Borges']
 };
 
 function _saveField(field, value) {
@@ -1146,7 +1269,6 @@ function getConfig()       { return _fbCache.config; }
 function saveConfig() {
   _fbCache.config = {
     licenca: document.getElementById('togLicenca')?.checked ?? true,
-    semFisc: document.getElementById('togSemFisc')?.checked ?? true
   };
   _saveField('config', _fbCache.config);
 }
@@ -1154,6 +1276,9 @@ function getCustom()      { return _fbCache.custom; }
 function saveCustom(d)    { _fbCache.custom = d; _saveField('custom', d); }
 function getDeletedIds()  { return _fbCache.deleted; }
 function saveDeletedIds(d){ _fbCache.deleted = d; _saveField('deleted', d); }
+function getDisabledIds() { return _fbCache.disabled || []; }
+function saveDisabledIds(d){ _fbCache.disabled = d; _saveField('disabled', d); }
+function isDisabled(id)   { return getDisabledIds().map(String).includes(String(id)); }
 function getEditedMap()   { return _fbCache.edited; }
 function saveEditedMap(d) { _fbCache.edited = d; _saveField('edited', d); }
 function getBairros()     { return _fbCache.bairros && _fbCache.bairros.length ? _fbCache.bairros : ['Centro']; }
@@ -1226,9 +1351,10 @@ function showToast(msg, type = 'success') {
 }
 
 function updateTopBadges() {
+  const active = DADOS.filter(r => !isDisabled(r.id));
   let f = 0;
-  DADOS.forEach(r => { if (getStatusFor(r.id) !== 'pendente') f++; });
-  document.getElementById('badgeTotal').textContent       = DADOS.length;
+  active.forEach(r => { if (getStatusFor(r.id) !== 'pendente') f++; });
+  document.getElementById('badgeTotal').textContent       = active.length;
   document.getElementById('badgeFiscalizado').textContent = f;
 }
 
@@ -1237,6 +1363,12 @@ function riskBadge(r) {
   if (r.includes('BAIXO')) return '<span class="badge badge-baixo">🟢 Baixo</span>';
   if (r.includes('ALTO'))  return '<span class="badge badge-alto">🔴 Alto</span>';
   return '<span class="badge badge-sem">'+esc(r)+'</span>';
+}
+
+function activeBadge(disabled) {
+  return disabled
+    ? '<span class="badge badge-inativo">🚫 Inativo</span>'
+    : '<span class="badge badge-ativo">✅ Ativo</span>';
 }
 
 function statusBadge(st) {
@@ -1264,12 +1396,14 @@ function navigate(pg) {
   });
   const titles = {
     dashboard:'Dashboard', estabelecimentos:'Estabelecimentos',
+    inativos:'Estabelecimentos Inativos',
     fiscalizacao:'Fiscalizações', configuracoes:'Configurações'
   };
   document.getElementById('topbarTitle').textContent = titles[pg] || pg;
   closeSidebar();
   if (pg === 'dashboard')        renderDashboard();
   if (pg === 'estabelecimentos') renderTable();
+  if (pg === 'inativos')         renderInativos();
   if (pg === 'fiscalizacao')     renderFiscalizacoes();
   if (pg === 'configuracoes')    renderConfig();
 }
@@ -1289,10 +1423,45 @@ function closeSidebar() {
 function filteredData() {
   const q = filters.q.toLowerCase().trim();
   return DADOS.filter(r => {
+    const disabled = isDisabled(r.id);
+    // Status filter: ativo, inativo, or '' (default = ativo only)
+    if (filters.status === 'inativo') { if (!disabled) return false; }
+    else { if (disabled) return false; } // '' or 'ativo': show only active
     if (filters.bairro    && r.bairro       !== filters.bairro)    return false;
     if (filters.categoria && r.categoria    !== filters.categoria) return false;
     if (filters.risco     && r.classe_risco !== filters.risco)     return false;
-    if (filters.status    && getStatusFor(r.id) !== filters.status) return false;
+    if (q) {
+      const hay = [r.nome_fantasia, r.razao_social, r.endereco,
+                   r.tipo_atividade, r.cnae, r.categoria, r.bairro]
+                  .map(v => v || '').join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function filteredDataInativos() {
+  const q = (document.getElementById('searchInativos')?.value||'').toLowerCase().trim();
+  return DADOS.filter(r => {
+    if (!isDisabled(r.id)) return false;
+    if (q) {
+      const hay = [r.nome_fantasia, r.razao_social, r.endereco,
+                   r.tipo_atividade, r.cnae, r.categoria, r.bairro]
+                  .map(v => v || '').join(' ').toLowerCase();
+      if (!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+function filteredFiscEstabs() {
+  const q = (document.getElementById('searchFiscEstab')?.value||'').toLowerCase().trim();
+  return DADOS.filter(r => {
+    if (isDisabled(r.id)) return false;
+    if (fiscEstabFilters.bairro    && r.bairro       !== fiscEstabFilters.bairro)    return false;
+    if (fiscEstabFilters.categoria && r.categoria    !== fiscEstabFilters.categoria) return false;
+    if (fiscEstabFilters.risco     && r.classe_risco !== fiscEstabFilters.risco)     return false;
+    if (fiscEstabFilters.status    && getStatusFor(r.id) !== fiscEstabFilters.status) return false;
     if (q) {
       const hay = [r.nome_fantasia, r.razao_social, r.endereco,
                    r.tipo_atividade, r.cnae, r.categoria, r.bairro]
@@ -1347,7 +1516,7 @@ function renderTable() {
       </div></td></tr>`;
   } else {
     tbody.innerHTML = slice.map(r => {
-      const st = getStatusFor(r.id);
+      const disabled = isDisabled(r.id);
       return `<tr>
         <td><div class="td-nome">${esc(r.nome_fantasia)}</div></td>
         <td><div class="td-razao">${esc(r.razao_social)}</div></td>
@@ -1356,12 +1525,11 @@ function renderTable() {
         <td>${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>'
                           : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
         <td>${riskBadge(r.classe_risco)}</td>
-        <td>${statusBadge(st)}</td>
+        <td>${activeBadge(disabled)}</td>
         <td><div class="td-actions">
           <button class="action-btn view"    onclick="openDetail(${r.id})"  title="Ver detalhes">👁️</button>
-          <button class="action-btn inspect" onclick="openInspect(${r.id})" title="Fiscalizar">🔍</button>
           <button class="action-btn edit"    onclick="openEdit(${r.id})"    title="Editar">✏️</button>
-          <button class="action-btn del"     onclick="deleteEstab(${r.id})" title="Excluir">🗑️</button>
+          <button class="action-btn ${disabled?'activate':'deactivate'}" onclick="toggleEstab(${r.id})" title="${disabled?'Ativar estabelecimento':'Desativar estabelecimento'}">${disabled?'✅':'🚫'}</button>
         </div></td>
       </tr>`;
     }).join('');
@@ -1483,7 +1651,7 @@ function setFiscFilter(v) {
     const map = { '':'Todos', fiscalizado:'Fiscalizado', pendente:'Pendente', irregular:'Irregular' };
     c.classList.toggle('active', c.textContent.trim().includes(map[v]||''));
   });
-  renderFiscalizacoes();
+  renderFiscRegistros();
 }
 
 function resetFiscFilters() {
@@ -1491,6 +1659,17 @@ function resetFiscFilters() {
   const si = document.getElementById('searchFisc');
   if (si) si.value = '';
   setFiscFilter('');
+}
+
+function resetFiscEstabFilters() {
+  fiscEstabFilters = { q: '', bairro: '', categoria: '', risco: '', status: '' };
+  const si = document.getElementById('searchFiscEstab');
+  if (si) si.value = '';
+  ['fiscEstabFilterBairro','fiscEstabFilterCategoria','fiscEstabFilterRisco','fiscEstabFilterStatus'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  fiscEstabPage = 1;
+  renderFiscEstabs();
 }
 
 function resetEstabFilters() {
@@ -1582,6 +1761,74 @@ function confirmDeleteFisc() {
 }
 
 function renderFiscalizacoes() {
+  renderFiscEstabs();
+  renderFiscRegistros();
+}
+
+// ─── TABELA DE ESTABELECIMENTOS NA ABA FISCALIZAÇÃO ──────
+function renderFiscEstabs() {
+  const data = filteredFiscEstabs();
+  const total = data.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (fiscEstabPage > totalPages) fiscEstabPage = totalPages;
+  const slice = data.slice((fiscEstabPage - 1) * PAGE_SIZE, fiscEstabPage * PAGE_SIZE);
+
+  const countEl = document.getElementById('fiscEstabCount');
+  if (countEl) countEl.textContent = total + ' estabelecimento' + (total !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('fiscEstabTableBody');
+  if (!tbody) return;
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="icon">🏪</div>
+        <h3>Nenhum estabelecimento encontrado</h3>
+        <p>Tente outros termos ou filtros.</p>
+      </div></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(r => {
+      const st = getStatusFor(r.id);
+      return `<tr>
+        <td><div class="td-nome">${esc(r.nome_fantasia)}</div></td>
+        <td><div class="td-razao">${esc(r.razao_social)}</div></td>
+        <td><div class="td-end">${esc(r.endereco)}</div></td>
+        <td><span class="badge badge-bairro">${esc(r.bairro)}</span></td>
+        <td>${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>'
+                          : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+        <td>${riskBadge(r.classe_risco)}</td>
+        <td>${statusBadge(st)}</td>
+        <td><div class="td-actions">
+          <button class="action-btn view"    onclick="openDetail(${r.id})"  title="Ver detalhes">👁️</button>
+          <button class="action-btn inspect" onclick="openInspect(${r.id})" title="Fiscalizar">🔍</button>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  const info = document.getElementById('fiscEstabPaginationInfo');
+  const btns = document.getElementById('fiscEstabPaginationBtns');
+  if (!info || !btns) return;
+  const from = total === 0 ? 0 : (fiscEstabPage - 1) * PAGE_SIZE + 1;
+  const to   = Math.min(fiscEstabPage * PAGE_SIZE, total);
+  info.textContent = `Mostrando ${from}–${to} de ${total}`;
+  let bHtml = `<button class="page-btn" onclick="goFiscEstabPage(${fiscEstabPage-1})" ${fiscEstabPage===1?'disabled':''}>‹</button>`;
+  getPageRange(fiscEstabPage, totalPages).forEach(p => {
+    if (p === '...') bHtml += `<button class="page-btn" disabled>…</button>`;
+    else bHtml += `<button class="page-btn ${p===fiscEstabPage?'active':''}" onclick="goFiscEstabPage(${p})">${p}</button>`;
+  });
+  bHtml += `<button class="page-btn" onclick="goFiscEstabPage(${fiscEstabPage+1})" ${fiscEstabPage===totalPages?'disabled':''}>›</button>`;
+  btns.innerHTML = bHtml;
+}
+
+function goFiscEstabPage(p) {
+  const tp = Math.max(1, Math.ceil(filteredFiscEstabs().length / PAGE_SIZE));
+  if (p < 1 || p > tp) return;
+  fiscEstabPage = p;
+  renderFiscEstabs();
+}
+
+// ─── REGISTRO DE FISCALIZAÇÕES ──────────────────────────
+function renderFiscRegistros() {
   const ins = getInspections();
   const q   = (document.getElementById('searchFisc')?.value||'').toLowerCase().trim();
   let rows  = [];
@@ -1620,25 +1867,122 @@ function renderFiscalizacoes() {
   }
 }
 
+// ─── TABELA DE INATIVOS ──────────────────────────────────
+function renderInativos() {
+  const data = filteredDataInativos();
+  const total = data.length;
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentInativosPage > totalPages) currentInativosPage = totalPages;
+  const slice = data.slice((currentInativosPage - 1) * PAGE_SIZE, currentInativosPage * PAGE_SIZE);
+
+  const countEl = document.getElementById('inativosCount');
+  if (countEl) countEl.textContent = total + ' resultado' + (total !== 1 ? 's' : '');
+
+  const tbody = document.getElementById('inativosTableBody');
+  if (!tbody) return;
+  if (!slice.length) {
+    tbody.innerHTML = `<tr><td colspan="8">
+      <div class="empty-state">
+        <div class="icon">🚫</div>
+        <h3>Nenhum estabelecimento inativo</h3>
+        <p>Todos os estabelecimentos estão ativos.</p>
+      </div></td></tr>`;
+  } else {
+    tbody.innerHTML = slice.map(r => `<tr>
+      <td><div class="td-nome">${esc(r.nome_fantasia)}</div></td>
+      <td><div class="td-razao">${esc(r.razao_social)}</div></td>
+      <td><div class="td-end">${esc(r.endereco)}</div></td>
+      <td><span class="badge badge-bairro">${esc(r.bairro)}</span></td>
+      <td>${r.categoria ? '<span class="badge badge-cat">'+esc(r.categoria)+'</span>'
+                        : '<span style="color:var(--text-muted);font-size:12px">—</span>'}</td>
+      <td>${riskBadge(r.classe_risco)}</td>
+      <td><span class="badge badge-inativo">🚫 Inativo</span></td>
+      <td><div class="td-actions">
+        <button class="action-btn view"    onclick="openDetail(${r.id})"  title="Ver detalhes">👁️</button>
+        <button class="action-btn activate" onclick="toggleEstab(${r.id})" title="Ativar estabelecimento">✅</button>
+        <button class="action-btn edit"    onclick="openEdit(${r.id})"    title="Editar">✏️</button>
+      </div></td>
+    </tr>`).join('');
+  }
+
+  const info = document.getElementById('inativosPaginationInfo');
+  const btns = document.getElementById('inativosPaginationBtns');
+  if (!info || !btns) return;
+  const from = total === 0 ? 0 : (currentInativosPage - 1) * PAGE_SIZE + 1;
+  const to   = Math.min(currentInativosPage * PAGE_SIZE, total);
+  info.textContent = `Mostrando ${from}–${to} de ${total}`;
+  let bHtml = `<button class="page-btn" onclick="goInativosPage(${currentInativosPage-1})" ${currentInativosPage===1?'disabled':''}>‹</button>`;
+  getPageRange(currentInativosPage, totalPages).forEach(p => {
+    if (p === '...') bHtml += `<button class="page-btn" disabled>…</button>`;
+    else bHtml += `<button class="page-btn ${p===currentInativosPage?'active':''}" onclick="goInativosPage(${p})">${p}</button>`;
+  });
+  bHtml += `<button class="page-btn" onclick="goInativosPage(${currentInativosPage+1})" ${currentInativosPage===totalPages?'disabled':''}>›</button>`;
+  btns.innerHTML = bHtml;
+}
+
+function goInativosPage(p) {
+  const tp = Math.max(1, Math.ceil(filteredDataInativos().length / PAGE_SIZE));
+  if (p < 1 || p > tp) return;
+  currentInativosPage = p;
+  renderInativos();
+}
+
+// ─── TOGGLE ATIVO/INATIVO ────────────────────────────────
+let _pendingDeactivateId = null;
+
+function toggleEstab(id) {
+  const disabled = isDisabled(id);
+  if (disabled) {
+    // Reativação: sem confirmação, imediata
+    const list = getDisabledIds();
+    const idx  = list.map(String).indexOf(String(id));
+    if (idx >= 0) list.splice(idx, 1);
+    saveDisabledIds(list);
+    showToast('Estabelecimento ativado! ✅','success');
+    refreshAfterChange();
+  } else {
+    // Desativação: pede confirmação
+    const r = DADOS.find(d => d.id === id);
+    _pendingDeactivateId = id;
+    document.getElementById('delNomeLabel').textContent = r ? r.nome_fantasia : 'ID ' + id;
+    openModal('modalConfirmDel');
+  }
+}
+
+function confirmDeactivate() {
+  if (_pendingDeactivateId === null) return;
+  const list = getDisabledIds();
+  list.push(_pendingDeactivateId);
+  saveDisabledIds(list);
+  closeModal('modalConfirmDel');
+  const r = DADOS.find(d => d.id === _pendingDeactivateId);
+  showToast((r ? r.nome_fantasia : 'Estabelecimento') + ' desativado.', 'success');
+  _pendingDeactivateId = null;
+  refreshAfterChange();
+}
+
 // ═══════════════════════════════════════════════════════
 // DASHBOARD
 // ═══════════════════════════════════════════════════════
 function renderDashboard() {
+  const activeData   = DADOS.filter(r => !isDisabled(r.id));
+  const inativoCount = DADOS.filter(r =>  isDisabled(r.id)).length;
   let fiscTotal=0, regTotal=0;
-  DADOS.forEach(r => {
+  activeData.forEach(r => {
     const st = getStatusFor(r.id);
     if (st !== 'pendente') fiscTotal++;
     if (st === 'fiscalizado') regTotal++;
   });
-  document.getElementById('statTotal').textContent       = DADOS.length;
+  document.getElementById('statTotal').textContent       = activeData.length;
   document.getElementById('statFiscalizado').textContent = fiscTotal;
   document.getElementById('statRegular').textContent     = regTotal;
-  document.getElementById('statPendente').textContent    = DADOS.length - fiscTotal;
+  document.getElementById('statPendente').textContent    = activeData.length - fiscTotal;
+  document.getElementById('statInativos').textContent    = inativoCount;
   updateTopBadges();
 
   // Bairros
   const bairros = {};
-  DADOS.forEach(r => { const k=r.bairro||'Não informado'; bairros[k]=(bairros[k]||0)+1; });
+  activeData.forEach(r => { const k=r.bairro||'Não informado'; bairros[k]=(bairros[k]||0)+1; });
   const bMax = Math.max(1,...Object.values(bairros));
   document.getElementById('bairroChart').innerHTML =
     Object.entries(bairros).sort((a,b)=>b[1]-a[1]).map(([name,cnt])=>`
@@ -1649,7 +1993,7 @@ function renderDashboard() {
 
   // Risco
   const riscos = {'BAIXO RISCO':0,'ALTO RISCO':0,'Não informado':0};
-  DADOS.forEach(r => {
+  activeData.forEach(r => {
     if      (r.classe_risco==='BAIXO RISCO') riscos['BAIXO RISCO']++;
     else if (r.classe_risco==='ALTO RISCO')  riscos['ALTO RISCO']++;
     else                                      riscos['Não informado']++;
@@ -1660,23 +2004,28 @@ function renderDashboard() {
       `<div class="pie-row"><div class="pie-dot" style="background:${rColors[name]}"></div>
        <div class="pie-name">${name}</div><div class="pie-val">${cnt}</div></div>`).join('');
 
-  // Categorias Top 8
+  // Categorias Top 8 — normaliza para maiúsculo para evitar contagens duplicadas
   const cats = {};
-  DADOS.forEach(r => { if(r.categoria) cats[r.categoria]=(cats[r.categoria]||0)+1; });
-  const topCats = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const cMax = topCats[0]?.[1]||1;
+  activeData.forEach(r => {
+    if (r.categoria && r.categoria.trim()) {
+      const cat = r.categoria.trim().toUpperCase();
+      cats[cat] = (cats[cat] || 0) + 1;
+    }
+  });
+  const topCats = Object.entries(cats).sort((a,b) => b[1] - a[1]).slice(0, 8);
+  const cMax    = topCats.length ? topCats[0][1] : 1;
   document.getElementById('catChart').innerHTML =
-    topCats.length ? topCats.map(([name,cnt])=>`
+    topCats.length ? topCats.map(([name, cnt]) => `
       <div class="bar-item">
         <div class="bar-label"><span style="font-size:12px">${esc(name)}</span><span>${cnt}</span></div>
-        <div class="bar-track"><div class="bar-fill" style="width:${(cnt/cMax*100).toFixed(1)}%"></div></div>
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.round(cnt / cMax * 100)}%"></div></div>
       </div>`).join('')
     : '<div style="color:var(--text-muted);font-size:13px;padding:10px">Nenhuma categoria cadastrada.</div>';
 
   // Vencimentos próximos 60d
   const now=new Date(); now.setHours(0,0,0,0);
   const future=new Date(); future.setDate(future.getDate()+60);
-  const soon = DADOS.filter(r => {
+  const soon = activeData.filter(r => {
     if (!r.ultimo_licenciamento) return false;
     const d = new Date(r.ultimo_licenciamento+'T00:00:00');
     return d>=now && d<=future;
@@ -1695,15 +2044,6 @@ function renderDashboard() {
           </div>
         </div>`).join('')
     : '<div style="text-align:center;color:var(--text-muted);font-size:13px;padding:20px">Nenhum vencimento nos próximos 60 dias</div>';
-
-  // Alert strip
-  const alertEl  = document.getElementById('alertStrip');
-  const pendCount = DADOS.length - fiscTotal;
-  if (pendCount > 0 && getConfig().semFisc) {
-    alertEl.innerHTML = `<div class="alert-strip">⚠️ <strong>${pendCount} estabelecimento${pendCount!==1?'s':''}</strong> ainda não foi${pendCount!==1?'ram':''} fiscalizado${pendCount!==1?'s':''}. <button class="btn btn-ghost btn-sm" style="margin-left:8px" onclick="navigate('estabelecimentos');setFilter('status','pendente')">Ver pendentes</button></div>`;
-  } else {
-    alertEl.innerHTML = '';
-  }
 }
 
 // ─── RELATÓRIO PARA IMPRESSÃO ─────────────────────────
@@ -1915,9 +2255,7 @@ function executarImpressao() {
 function renderConfig() {
   const cfg  = getConfig();
   const togL = document.getElementById('togLicenca');
-  const togS = document.getElementById('togSemFisc');
   if (togL) togL.checked = cfg.licenca !== false;
-  if (togS) togS.checked = cfg.semFisc !== false;
   renderAgents();
   renderBairroTags();
   updateConfigStats();
@@ -1936,6 +2274,13 @@ function refreshAllBairroDropdowns() {
     const cur = fb.value;
     fb.innerHTML = '<option value="">Todos os bairros</option>' + opts;
     if (cur) fb.value = cur;
+  }
+  // Filtro na página de fiscalização
+  const ff = document.getElementById('fiscEstabFilterBairro');
+  if (ff) {
+    const cur = ff.value;
+    ff.innerHTML = '<option value="">Todos os bairros</option>' + opts;
+    if (cur) ff.value = cur;
   }
   // Modal estab
   const eb = document.getElementById('estBairro');
@@ -2070,6 +2415,130 @@ function updateConfigStats() {
 }
 
 // ═══════════════════════════════════════════════════════
+// RESTAURAR INATIVOS
+// ═══════════════════════════════════════════════════════
+function importInativos() {
+  document.getElementById('importInativosFile').click();
+}
+
+function doImportInativos(e) {
+  const file = e.target.files[0];
+  e.target.value = '';
+  if (!file) return;
+
+  readJSON(file, data => {
+    try {
+      // Aceita array direto ou objeto com chave "estabelecimentos"
+      let lista = Array.isArray(data)
+        ? data
+        : Array.isArray(data.estabelecimentos)
+          ? data.estabelecimentos
+          : null;
+
+      if (!lista) {
+        showToast('Formato inválido: o arquivo deve conter um array de estabelecimentos.', 'error');
+        return;
+      }
+
+      // Filtra entradas sem nome_fantasia
+      lista = lista.filter(r => r && r.nome_fantasia && r.nome_fantasia.trim());
+
+      if (!lista.length) {
+        showToast('Nenhum estabelecimento válido encontrado no arquivo.', 'error');
+        return;
+      }
+
+      const custom    = getCustom();
+      const disabled  = getDisabledIds();
+      const disabledSet = new Set(disabled.map(String));
+
+      let adicionados  = 0;
+      let jaInativos   = 0;
+      let reativados   = 0;
+      let nomes_adicionados = [];
+
+      lista.forEach(item => {
+        const nomeNorm = item.nome_fantasia.trim().toUpperCase();
+
+        // Verifica se já existe em DADOS (base + custom)
+        const existente = DADOS.find(d =>
+          (d.nome_fantasia || '').trim().toUpperCase() === nomeNorm
+        );
+
+        if (existente) {
+          // Já existe: apenas garante que está na lista de inativos
+          if (disabledSet.has(String(existente.id))) {
+            jaInativos++;
+          } else {
+            disabled.push(existente.id);
+            disabledSet.add(String(existente.id));
+            reativados++;
+          }
+        } else {
+          // Não existe: cria novo registro no custom como inativo
+          const novoId = Date.now() + Math.floor(Math.random() * 100000);
+          const novo = {
+            id: novoId,
+            nome_fantasia:        item.nome_fantasia.trim(),
+            razao_social:         item.razao_social         || '',
+            endereco:             item.endereco             || '',
+            bairro:               item.bairro               || '',
+            categoria:            item.categoria            ? item.categoria.trim().toUpperCase() : '',
+            tipo_atividade:       item.tipo_atividade       ? item.tipo_atividade.trim().toUpperCase() : '',
+            cnae:                 item.cnae                 || '',
+            classe_risco:         item.classe_risco         || '',
+            ultimo_licenciamento: item.ultimo_licenciamento || '',
+            orgao_licenciador:    item.orgao_licenciador    || '',
+          };
+          custom.push(novo);
+          disabled.push(novoId);
+          disabledSet.add(String(novoId));
+          adicionados++;
+          nomes_adicionados.push(novo.nome_fantasia);
+        }
+      });
+
+      // Persiste as mudanças
+      saveCustom(custom);
+      saveDisabledIds(disabled);
+      rebuildDADOS();
+      refreshAllCategoryDropdowns();
+      refreshAfterChange();
+
+      // Exibe resultado detalhado na tela
+      const total = lista.length;
+      const resultEl = document.getElementById('importInativosResult');
+      let cor, icon;
+      if (adicionados > 0) { cor = 'var(--success-bg)'; icon = '✅'; }
+      else if (reativados > 0) { cor = 'var(--warning-bg)'; icon = '⚠️'; }
+      else { cor = '#f0f4ff'; icon = 'ℹ️'; }
+
+      resultEl.style.display = 'block';
+      resultEl.style.background = cor;
+      resultEl.style.border = '1.5px solid ' + (adicionados > 0 ? 'var(--success)' : 'var(--amarelo-dark)');
+      resultEl.innerHTML = `
+        <div style="font-weight:700;font-size:14px;margin-bottom:8px">${icon} Importação concluída — ${total} registro${total!==1?'s':''} no arquivo</div>
+        <div style="display:grid;grid-template-columns:repeat(3,auto);gap:6px 24px;max-width:420px">
+          <div>📥 <strong>${adicionados}</strong> novo${adicionados!==1?'s':''} inserido${adicionados!==1?'s':''}</div>
+          <div>🔄 <strong>${reativados}</strong> marcado${reativados!==1?'s':''} como inativo</div>
+          <div>✔️ <strong>${jaInativos}</strong> já estava${jaInativos!==1?'m':''} inativo${jaInativos!==1?'s':''}</div>
+        </div>
+        ${nomes_adicionados.length ? `
+          <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">
+            Novos: ${nomes_adicionados.slice(0,8).map(n=>`<span style="background:rgba(0,0,0,0.06);padding:2px 7px;border-radius:50px;margin:2px 3px;display:inline-block">${esc(n)}</span>`).join('')}
+            ${nomes_adicionados.length > 8 ? `<span style="color:var(--text-muted)">…e mais ${nomes_adicionados.length-8}</span>` : ''}
+          </div>` : ''}
+      `;
+
+      showToast(`Inativos restaurados: ${adicionados} adicionado${adicionados!==1?'s':''}, ${reativados} atualizado${reativados!==1?'s':''}.`, 'success');
+
+    } catch(err) {
+      showToast('Erro ao processar o arquivo: ' + err.message, 'error');
+    }
+  });
+}
+
+// ═══════════════════════════════════════════════════════
 // BACKUP COMPLETO (inclui dados base)
 // ═══════════════════════════════════════════════════════
 function backupData() {
@@ -2082,6 +2551,7 @@ function backupData() {
     config:      getConfig(),
     custom:      getCustom(),
     deleted:     getDeletedIds(),
+    disabled:    getDisabledIds(),
     edited:      getEditedMap(),
     // Dados base (visa_state/base_data) — mesma coleção, doc diferente
     estabelecimentos: _DADOS_ORIGINAL.slice()
@@ -2103,6 +2573,7 @@ function doImport(e) {
       if (data.config)      { _fbCache.config = data.config; _saveField('config', data.config); }
       if (data.custom)      saveCustom(data.custom);
       if (data.deleted)     saveDeletedIds(data.deleted);
+      if (data.disabled)    saveDisabledIds(data.disabled);
       if (data.edited)      saveEditedMap(data.edited);
 
       // Restaura dados base se presentes no backup
@@ -2181,6 +2652,15 @@ function refreshAllCategoryDropdowns() {
   catSel.innerHTML = '<option value="">Todas as categorias</option>' +
     cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
   catSel.value = curVal;
+
+  // Filtro de categoria na aba fiscalização
+  const ffCat = document.getElementById('fiscEstabFilterCategoria');
+  if (ffCat) {
+    const cur = ffCat.value;
+    ffCat.innerHTML = '<option value="">Todas as categorias</option>' +
+      cats.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join('');
+    ffCat.value = cur;
+  }
 }
 
 function initCatDatalist() {
@@ -2191,9 +2671,11 @@ function initCatDatalist() {
 
 function refreshAfterChange() {
   updateTopBadges();
+  const activeCount = DADOS.filter(r => !isDisabled(r.id)).length;
   const el = document.getElementById('statTotal');
-  if (el) el.textContent = DADOS.length;
+  if (el) el.textContent = activeCount;
   if (currentPage==='estabelecimentos') renderTable();
+  if (currentPage==='inativos')         renderInativos();
   if (currentPage==='dashboard')        renderDashboard();
   if (currentPage==='fiscalizacao')     renderFiscalizacoes();
   if (currentPage==='configuracoes')    updateConfigStats();
@@ -2313,6 +2795,7 @@ async function boot() {
       if (d.config)      _fbCache.config      = d.config;
       if (d.custom)      _fbCache.custom      = d.custom;
       if (d.deleted)     _fbCache.deleted     = d.deleted;
+      if (d.disabled)    _fbCache.disabled    = d.disabled;
       if (d.edited)      _fbCache.edited      = d.edited;
       if (d.bairros)     _fbCache.bairros     = d.bairros;
     }
