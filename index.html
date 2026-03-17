@@ -7,6 +7,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
 <style>
 :root {
   --rosa:       #f9b8c8;
@@ -552,9 +553,109 @@ input:checked + .slider::before { transform: translateX(18px); }
 @media print {
   body > *:not(#printWindow) { display: none !important; }
 }
+/* ─── LOGIN OVERLAY ─────────────────────────────────── */
+#loginOverlay {
+  position:fixed; inset:0; background:var(--bg);
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(249,184,200,.45) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(253,230,138,.35) 0%, transparent 50%);
+  z-index:9999; display:flex; align-items:center; justify-content:center;
+}
+.login-card {
+  background:rgba(255,255,255,.88); backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1.5px solid rgba(255,255,255,.7); border-radius:var(--radius);
+  padding:40px 36px; max-width:420px; width:100%;
+  box-shadow:0 24px 80px rgba(45,27,36,.18);
+}
+.login-logo { text-align:center; margin-bottom:28px; }
+.login-logo .logo-icon {
+  width:60px; height:60px; border-radius:18px; background:var(--rosa-dark);
+  display:flex; align-items:center; justify-content:center; font-size:28px;
+  margin:0 auto 12px; box-shadow:0 6px 20px rgba(244,138,171,.4); overflow:hidden;
+}
+.login-logo .logo-icon img { width:100%; height:100%; object-fit:cover; border-radius:18px; }
+.login-logo h2 { font-family:'Playfair Display',serif; font-size:22px; color:var(--text); }
+.login-logo p  { font-size:12px; color:var(--text-muted); margin-top:4px; }
+.login-field { margin-bottom:16px; }
+.login-field label { display:block; font-size:11px; font-weight:700; color:var(--text-muted); letter-spacing:.6px; text-transform:uppercase; margin-bottom:6px; }
+.login-field input {
+  width:100%; padding:12px 16px; border:1.5px solid var(--border-solid); border-radius:var(--radius-sm);
+  font-size:14px; font-family:'DM Sans',sans-serif; color:var(--text);
+  background:rgba(255,255,255,.8); outline:none; transition:border-color .2s;
+}
+.login-field input:focus { border-color:var(--rosa-dark); box-shadow:0 0 0 3px rgba(244,138,171,.15); }
+.login-err {
+  background:var(--danger-bg); border:1px solid #f9c0c7; color:var(--danger);
+  border-radius:var(--radius-sm); padding:10px 14px; font-size:13px; margin-bottom:14px; display:none;
+}
+.login-btn-full {
+  width:100%; padding:13px; background:var(--rosa-dark); color:#fff;
+  border:none; border-radius:50px; font-size:15px; font-weight:700;
+  font-family:'DM Sans',sans-serif; cursor:pointer; transition:all .2s;
+  box-shadow:0 4px 16px rgba(244,138,171,.4);
+}
+.login-btn-full:hover { background:#e8709a; transform:translateY(-1px); }
+.login-btn-full:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+
+/* ─── USER INFO IN SIDEBAR ──────────────────────────── */
+.sidebar-user {
+  margin:0 10px 4px; padding:10px 12px; border-radius:var(--radius-sm);
+  background:rgba(249,184,200,.18); border:1px solid var(--border);
+  display:flex; align-items:center; gap:10px;
+}
+.sidebar-user-avatar {
+  width:32px; height:32px; border-radius:50%; background:var(--rosa-dark);
+  display:flex; align-items:center; justify-content:center; font-size:14px; flex-shrink:0;
+}
+.sidebar-user-info { overflow:hidden; }
+.sidebar-user-name { font-size:12px; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sidebar-user-role { font-size:10px; color:var(--text-muted); font-weight:600; letter-spacing:.4px; text-transform:uppercase; }
+.btn-logout { width:calc(100% - 20px); margin:0 10px 6px; padding:8px; border-radius:var(--radius-sm); background:transparent; border:1.5px solid var(--border-solid); color:var(--text-muted); font-size:12px; font-weight:600; cursor:pointer; transition:all .2s; text-align:left; display:flex; align-items:center; gap:8px; }
+.btn-logout:hover { background:var(--danger-bg); border-color:var(--danger); color:var(--danger); }
+
+/* ─── FISCAL PROFILE CARD ───────────────────────────── */
+.fiscal-profile-card {
+  background:rgba(255,255,255,.62); backdrop-filter:var(--glass-blur);
+  -webkit-backdrop-filter:var(--glass-blur);
+  border:1.5px solid rgba(255,255,255,.55); border-radius:var(--radius);
+  padding:24px; margin-top:28px;
+  box-shadow:0 4px 28px rgba(244,138,171,.10), inset 0 1px 0 rgba(255,255,255,.8);
+}
+.fiscal-profile-card h3 { font-family:'Playfair Display',serif; font-size:18px; margin-bottom:6px; }
+.fiscal-profile-card p  { font-size:13px; color:var(--text-muted); margin-bottom:18px; }
+.profile-info-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:18px; }
+.profile-info-item label { display:block; font-size:10px; font-weight:700; color:var(--text-muted); letter-spacing:.6px; text-transform:uppercase; margin-bottom:3px; }
+.profile-info-item p { font-size:14px; font-weight:500; color:var(--text); }
+
+/* ─── SETUP MODAL ───────────────────────────────────── */
+#modalFiscalSetup .modal { max-width:560px; }
+
 </style>
 </head>
 <body>
+
+<!-- ─── LOGIN OVERLAY ──────────────────────────────── -->
+<div id="loginOverlay">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon"><img src="imag01.jpeg" alt="VISA" onerror="this.parentElement.textContent='🏥'"></div>
+      <h2>VISA Careiro</h2>
+      <p>Cadastro Sanitário Municipal — Acesso Restrito</p>
+    </div>
+    <div class="login-err" id="loginErr"></div>
+    <div class="login-field">
+      <label>E-mail</label>
+      <input type="email" id="loginEmail" placeholder="seu@email.com" autocomplete="email">
+    </div>
+    <div class="login-field">
+      <label>Senha</label>
+      <input type="password" id="loginSenha" placeholder="••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn-full" id="loginBtn" onclick="doLogin()">Entrar</button>
+    <div style="text-align:center;margin-top:16px;font-size:11px;color:var(--text-muted)">VISA — Vigilância Sanitária de Careiro, AM</div>
+  </div>
+</div>
 
 <!-- Loading Overlay -->
 <div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(245,232,239,.96);z-index:9000;flex-direction:column;align-items:center;justify-content:center;gap:16px">
@@ -577,13 +678,27 @@ input:checked + .slider::before { transform: translateX(18px); }
     <p>Cadastro Sanitário Municipal</p>
   </div>
 
-  <div class="nav-section">Menu Principal</div>
+  <div class="sidebar-user" id="sidebarUserInfo">
+    <div class="sidebar-user-avatar" id="sidebarAvatar">👤</div>
+    <div class="sidebar-user-info">
+      <div class="sidebar-user-name" id="sidebarUserName">—</div>
+      <div class="sidebar-user-role" id="sidebarUserRole">—</div>
+    </div>
+  </div>
+  <button class="btn-logout" onclick="doLogout()">🚪 Sair do sistema</button>
+  <div class="nav-section" id="navSectionMenuPrincipal">Menu Principal</div>
   <button class="nav-item active" data-page="dashboard"        onclick="navigate('dashboard')"><span class="icon">📊</span> Dashboard</button>
   <button class="nav-item"        data-page="estabelecimentos" onclick="navigate('estabelecimentos')"><span class="icon">🏪</span> Estabelecimentos</button>
   <button class="nav-item"        data-page="inativos"         onclick="navigate('inativos')"><span class="icon">🚫</span> Inativos</button>
   <button class="nav-item"        data-page="fiscalizacao"     onclick="navigate('fiscalizacao')"><span class="icon">🔍</span> Fiscalizações</button>
 
-  <div class="nav-section">Sistema</div>
+  <!-- Itens exclusivos do fiscal (ocultos para admin) -->
+  <div class="nav-section" id="navSectionFiscal" style="display:none">Minha Área</div>
+  <button class="nav-item" id="navFiscRegistro" data-page="fiscalizacao" onclick="navigate('fiscalizacao')" style="display:none"><span class="icon">📋</span> Registro de Fiscalizações</button>
+  <button class="nav-item" id="navFiscEstabs"   data-page="fiscal_estabs" onclick="navigate('fiscal_estabs')" style="display:none"><span class="icon">🏪</span> Estabelecimentos para Fiscalizar</button>
+  <button class="nav-item" id="navMeuCadastro"  data-page="meu_cadastro" onclick="navigate('meu_cadastro')" style="display:none"><span class="icon">👤</span> Meu Cadastro</button>
+
+  <div class="nav-section" id="navSectionSistema">Sistema</div>
   <button class="nav-item"        data-page="configuracoes"    onclick="navigate('configuracoes')"><span class="icon">⚙️</span> Configurações</button>
 
   <div class="sidebar-footer">
@@ -727,64 +842,6 @@ input:checked + .slider::before { transform: translateX(18px); }
     <!-- ═══════════ FISCALIZAÇÕES ═══════════ -->
     <div class="page" id="page-fiscalizacao">
 
-      <!-- Seção 1: Estabelecimentos para Fiscalização -->
-      <div class="table-section">
-        <div class="table-header">
-          <h2>🏪 Estabelecimentos para Fiscalizar</h2>
-          <div style="display:flex;gap:10px;align-items:center">
-            <span class="count-badge" id="fiscEstabCount">0 estabelecimentos</span>
-          </div>
-        </div>
-        <div style="padding:14px 22px 0">
-          <div class="search-container">
-            <span class="search-icon">🔍</span>
-            <input class="search-input" id="searchFiscEstab" type="text" placeholder="Buscar estabelecimento..." oninput="renderFiscEstabs()">
-            <button class="search-clear" onclick="document.getElementById('searchFiscEstab').value='';renderFiscEstabs()">✕</button>
-          </div>
-          <div class="filters-row" style="margin-top:10px;margin-bottom:14px">
-            <select class="filter-select" id="fiscEstabFilterBairro" onchange="fiscEstabFilters.bairro=this.value;fiscEstabPage=1;renderFiscEstabs()">
-              <option value="">Todos os bairros</option>
-            </select>
-            <select class="filter-select" id="fiscEstabFilterCategoria" onchange="fiscEstabFilters.categoria=this.value;fiscEstabPage=1;renderFiscEstabs()">
-              <option value="">Todas as categorias</option>
-            </select>
-            <select class="filter-select" id="fiscEstabFilterRisco" onchange="fiscEstabFilters.risco=this.value;fiscEstabPage=1;renderFiscEstabs()">
-              <option value="">Todos os riscos</option>
-              <option value="BAIXO RISCO">Baixo Risco</option>
-              <option value="ALTO RISCO">Alto Risco</option>
-            </select>
-            <select class="filter-select" id="fiscEstabFilterStatus" onchange="fiscEstabFilters.status=this.value;fiscEstabPage=1;renderFiscEstabs()">
-              <option value="">Todos os status</option>
-              <option value="fiscalizado">✅ Fiscalizado</option>
-              <option value="pendente">⏳ Pendente</option>
-              <option value="irregular">❌ Irregular</option>
-            </select>
-            <button class="btn btn-ghost btn-sm" onclick="resetFiscEstabFilters()" style="border-radius:50px;padding:6px 14px;font-size:12px">↺ Resetar</button>
-          </div>
-        </div>
-        <div class="table-scroll">
-          <table>
-            <thead>
-              <tr>
-                <th>Nome Fantasia</th>
-                <th>Razão Social</th>
-                <th>Endereço</th>
-                <th>Bairro</th>
-                <th>Categoria</th>
-                <th>Risco</th>
-                <th>Status Vistoria</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody id="fiscEstabTableBody"></tbody>
-          </table>
-        </div>
-        <div class="pagination">
-          <div class="pagination-info" id="fiscEstabPaginationInfo"></div>
-          <div class="pagination-btns" id="fiscEstabPaginationBtns"></div>
-        </div>
-      </div>
-
       <!-- Seção 2: Registro de Fiscalizações -->
       <div style="margin-top:28px">
         <div class="search-container">
@@ -796,6 +853,10 @@ input:checked + .slider::before { transform: translateX(18px); }
           <button class="filter-chip" onclick="setFiscFilter('fiscalizado')">✅ Fiscalizado</button>
           <button class="filter-chip" onclick="setFiscFilter('pendente')">⏳ Pendente</button>
           <button class="filter-chip" onclick="setFiscFilter('irregular')">❌ Irregular</button>
+          <select class="filter-select" id="fiscSortSelect" onchange="fiscSort=this.value;renderFiscRegistros()" style="margin-left:auto">
+            <option value="recentes">📅 Mais Recentes</option>
+            <option value="az">🔤 A → Z</option>
+          </select>
           <button class="btn btn-ghost btn-sm" onclick="resetFiscFilters()" title="Limpar filtros" style="border-radius:50px;padding:6px 14px;font-size:12px;margin-left:4px">↺ Resetar</button>
         </div>
         <div class="table-section" style="margin-top:20px">
@@ -827,6 +888,101 @@ input:checked + .slider::before { transform: translateX(18px); }
           <div class="icon">📋</div>
           <h3>Nenhuma fiscalização registrada</h3>
           <p>Selecione um estabelecimento acima e clique em 🔍 para registrar uma vistoria.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ═══════════ MEU CADASTRO (fiscal only) ═══════════ -->
+    <div class="page" id="page-meu_cadastro">
+      <div class="fiscal-profile-card" id="fiscalProfileSection" style="max-width:680px">
+        <h3>👤 Meu Cadastro</h3>
+        <p>Seus dados como fiscal da Vigilância Sanitária</p>
+        <div class="profile-info-grid" id="fiscalProfileInfo">
+          <div class="profile-info-item"><label>Nome Completo</label><p id="pfNome">—</p></div>
+          <div class="profile-info-item"><label>Matrícula</label><p id="pfMatricula">—</p></div>
+          <div class="profile-info-item"><label>Telefone</label><p id="pfTelefone">—</p></div>
+          <div class="profile-info-item"><label>Equipe Vinculada</label><p id="pfEquipe">—</p></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="openFiscalSetup(true)">✏️ Editar Meus Dados</button>
+      </div>
+      <!-- Redefinição de senha dentro do perfil do fiscal -->
+      <div class="fiscal-profile-card" style="max-width:680px;margin-top:22px">
+        <h3>🔐 Alterar Senha de Acesso</h3>
+        <p>Redefina sua senha de acesso ao sistema VISA Careiro</p>
+        <div class="form-group" style="max-width:340px;margin-top:16px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px">Nova Senha</label>
+          <input class="form-input" type="password" id="newPasswordFiscal" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+        </div>
+        <div class="form-group" style="max-width:340px;margin-top:12px">
+          <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px">Confirmar Nova Senha</label>
+          <input class="form-input" type="password" id="confirmPasswordFiscal" placeholder="Repita a nova senha" autocomplete="new-password">
+        </div>
+        <button class="btn btn-primary" style="margin-top:16px" onclick="changeUserPassword('newPasswordFiscal','confirmPasswordFiscal')">🔒 Alterar Senha</button>
+      </div>
+    </div>
+
+    <!-- ═══════════ ESTABELECIMENTOS PARA FISCALIZAR (fiscal only) ═══════════ -->
+    <div class="page" id="page-fiscal_estabs">
+      <div class="table-section">
+        <div class="table-header">
+          <h2>🏪 Estabelecimentos para Fiscalizar</h2>
+          <div style="display:flex;gap:10px;align-items:center">
+            <span class="count-badge" id="fiscEstabCount">0 estabelecimentos</span>
+          </div>
+        </div>
+        <div style="padding:14px 22px 0">
+          <div class="search-container">
+            <span class="search-icon">🔍</span>
+            <input class="search-input" id="searchFiscEstab" type="text" placeholder="Buscar estabelecimento..." oninput="renderFiscEstabs()">
+            <button class="search-clear" onclick="document.getElementById('searchFiscEstab').value='';renderFiscEstabs()">✕</button>
+          </div>
+          <div class="filters-row" style="margin-top:10px;margin-bottom:14px">
+            <select class="filter-select" id="fiscEstabFilterBairro" onchange="fiscEstabFilters.bairro=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todos os bairros</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterCategoria" onchange="fiscEstabFilters.categoria=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todas as categorias</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterRisco" onchange="fiscEstabFilters.risco=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todos os riscos</option>
+              <option value="BAIXO RISCO">Baixo Risco</option>
+              <option value="ALTO RISCO">Alto Risco</option>
+            </select>
+            <select class="filter-select" id="fiscEstabFilterStatus" onchange="fiscEstabFilters.status=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="">Todos os status</option>
+              <option value="fiscalizado">✅ Fiscalizado</option>
+              <option value="pendente">⏳ Pendente</option>
+              <option value="irregular">❌ Irregular</option>
+            </select>
+            <select class="filter-select" id="fiscEstabSortSelect" onchange="fiscEstabSort=this.value;fiscEstabPage=1;renderFiscEstabs()">
+              <option value="az">🔤 A → Z</option>
+              <option value="za">🔤 Z → A</option>
+              <option value="recentes">📅 Mais Recentes</option>
+            </select>
+            <button class="btn btn-ghost btn-sm" onclick="resetFiscEstabFilters()" style="border-radius:50px;padding:6px 14px;font-size:12px">↺ Resetar</button>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome Fantasia</th>
+                <th>Razão Social</th>
+                <th>Endereço</th>
+                <th>Bairro</th>
+                <th>Categoria</th>
+                <th>Risco</th>
+                <th>Status Vistoria</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody id="fiscEstabTableBody"></tbody>
+          </table>
+        </div>
+        <div class="pagination">
+          <div class="pagination-info" id="fiscEstabPaginationInfo"></div>
+          <div class="pagination-btns" id="fiscEstabPaginationBtns"></div>
         </div>
       </div>
     </div>
@@ -928,6 +1084,21 @@ input:checked + .slider::before { transform: translateX(18px); }
           </div>
           <input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)">
           <div style="margin-top:14px;font-size:13px;color:var(--text-muted)" id="configStats"></div>
+        </div>
+
+        <!-- Alterar Senha -->
+        <div class="config-card">
+          <h3>🔐 Alterar Senha de Acesso</h3>
+          <p>Redefina sua senha de acesso ao sistema VISA Careiro</p>
+          <div class="form-group" style="max-width:340px;margin-top:16px">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px">Nova Senha</label>
+            <input class="form-input" type="password" id="newPasswordAdmin" placeholder="Mínimo 6 caracteres" autocomplete="new-password">
+          </div>
+          <div class="form-group" style="max-width:340px;margin-top:12px">
+            <label style="display:block;font-size:11px;font-weight:700;color:var(--text-muted);letter-spacing:.6px;text-transform:uppercase;margin-bottom:6px">Confirmar Nova Senha</label>
+            <input class="form-input" type="password" id="confirmPasswordAdmin" placeholder="Repita a nova senha" autocomplete="new-password">
+          </div>
+          <button class="btn btn-primary" style="margin-top:16px" onclick="changeUserPassword('newPasswordAdmin','confirmPasswordAdmin')">🔒 Alterar Senha</button>
         </div>
 
       </div>
@@ -1203,6 +1374,52 @@ input:checked + .slider::before { transform: translateX(18px); }
   </div>
 </div>
 
+
+<!-- ─── MODAL SETUP FISCAL ─────────────────────────── -->
+<div class="overlay" id="modalFiscalSetup">
+  <div class="modal" style="max-width:560px">
+    <div class="modal-header">
+      <div>
+        <h2 id="fiscalSetupTitle">👤 Configure Seu Cadastro</h2>
+        <div style="margin-top:4px;font-size:13px;color:var(--text-light)" id="fiscalSetupSub">Preencha seus dados como fiscal da VISA</div>
+      </div>
+      <button class="modal-close" id="fiscalSetupClose" onclick="closeFiscalSetup()" style="display:none">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="inspect-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label>Nome Completo *</label>
+            <input class="form-input auto-upper" id="fsNome" placeholder="SEU NOME COMPLETO">
+          </div>
+          <div class="form-group">
+            <label>Matrícula *</label>
+            <input class="form-input auto-upper" id="fsMatricula" placeholder="EX: 12345">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Telefone</label>
+            <input class="form-input" id="fsTelefone" placeholder="(92) 99999-9999" type="tel">
+          </div>
+          <div class="form-group">
+            <label>Equipe (opcional)</label>
+            <select class="form-select" id="fsEquipe">
+              <option value="">Sem equipe vinculada</option>
+            </select>
+          </div>
+        </div>
+        <div id="fsFirstAccessNote" style="background:var(--amarelo-soft);border:1px solid var(--amarelo-dark);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:#7a5c00;margin-top:4px">
+          ℹ️ Este é seu <strong>primeiro acesso</strong>. Configure seus dados para continuar usando o sistema.
+        </div>
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:6px">
+          <button class="btn btn-ghost" id="fiscalSetupCancelBtn" onclick="closeFiscalSetup()" style="display:none">Cancelar</button>
+          <button class="btn btn-primary" onclick="saveFiscalProfile()">💾 Salvar Cadastro</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Toast container -->
 <div class="toast-container" id="toastContainer"></div>
 
@@ -1222,6 +1439,8 @@ let fiscEstabFilters = { q: '', bairro: '', categoria: '', risco: '', status: ''
 let currentInspectId = null;
 let currentEditId    = null;
 let fiscFilter       = '';
+let fiscSort         = 'recentes'; // 'recentes' | 'az'
+let fiscEstabSort    = 'az';       // 'az' | 'za' | 'recentes'
 let _pendingDeleteId = null;
 let _editFiscId      = null; // estabId being edited in fiscalizacao
 let _editFiscIdx     = null; // index within inspections array
@@ -1230,17 +1449,30 @@ let _editFiscIdx     = null; // index within inspections array
 // FIREBASE SETUP
 // ═══════════════════════════════════════════════════════
 const firebaseConfig = {
-  apiKey: "AIzaSyDobyr74BiOubbSM44k6oKlfgmmuiGCk94",
-  authDomain: "visa-82b2c.firebaseapp.com",
-  projectId: "visa-82b2c",
-  storageBucket: "visa-82b2c.firebasestorage.app",
-  messagingSenderId: "1075858639777",
-  appId: "1:1075858639777:web:412689646dfb3aa6ba99e0"
+  apiKey: "AIzaSyDR7J5Fzqkpe6s9GIZW7ibDQgkguHTt_2U",
+  authDomain: "visa-f4c86.firebaseapp.com",
+  projectId: "visa-f4c86",
+  storageBucket: "visa-f4c86.firebasestorage.app",
+  messagingSenderId: "794096930643",
+  appId: "1:794096930643:web:c3ae4d70fcd34c44d49ba6"
 };
 const _fbApp     = firebase.initializeApp(firebaseConfig);
 const _db        = firebase.firestore(_fbApp);
-const _STATE_REF = _db.collection('visa_state').doc('app');
-const _BASE_REF  = _db.collection('visa_state').doc('base_data');
+const _STATE_REF    = _db.collection('visa_state').doc('app');
+const _BASE_REF     = _db.collection('visa_state').doc('base_data');
+const _USERS_REF    = _db.collection('visa_usuarios');
+const _fbAuth       = firebase.auth(_fbApp);
+
+// ─── CURRENT USER (set after login) ────────────────────────
+let _currentUser = null; // { uid, email, role, profile }
+
+// Try restore session from sessionStorage
+(function(){
+  try {
+    const s = sessionStorage.getItem('visa_session');
+    if (s) _currentUser = JSON.parse(s);
+  } catch(e) {}
+})();
 
 const _fbCache = {
   inspections: {},
@@ -1250,7 +1482,7 @@ const _fbCache = {
   deleted: [],
   disabled: [],
   edited: {},
-  bairros: ['Estrada de Autazes', 'Comunidade Boa Vista', 'Estrada do Manaquiri', 'Jacamim', 'P.A. Panelão', 'Pacatuba', 'Lago Castanho', 'Órgãos Públicos', 'UBS e Unidades de Saúde', 'Ramal Timbó', 'Comunidade Tilheiro', 'Hotéis e Pousadas', 'Lago Tilheiro', 'Purupuru', 'Purupuru Ribeirinha', 'Escolas', 'Samama', 'Lago Januacá', 'São José', 'Ramal Floresta', 'Mamori I', 'Lago Tapagem','Mercado Central','Centro','Bairro Novo','Vista Alegre','Novo Horizonte','Nova Esperança','Sebastião Borges']
+  bairros: ['ESTRADA DE AUTAZES','COMUNIDADE BOA VISTA','ESTRADA DO MANAQUIRI','JACAMIM','P.A. PANELÃO','PACATUBA','LAGO CASTANHO','ÓRGÃOS PÚBLICOS','UBS E UNIDADES DE SAÚDE','RAMAL TIMBÓ','COMUNIDADE TILHEIRO','HOTÉIS E POUSADAS','LAGO TILHEIRO','PURUPURU','PURUPURU RIBEIRINHA','ESCOLAS','SAMAÚMA','LAGO JANUACÁ','SÃO JOSÉ','RAMAL FLORESTA','MAMORI I','LAGO TAPAGEM','MERCADO CENTRAL','CENTRO','BAIRRO NOVO','VISTA ALEGRE','NOVO HORIZONTE','NOVA ESPERANÇA','SEBASTIÃO BORGES']
 };
 
 function _saveField(field, value) {
@@ -1289,7 +1521,22 @@ function insKey(id) { return String(id); }
 function getStatusFor(id) {
   const recs = getInspections()[insKey(id)];
   if (!recs || !recs.length) return 'pendente';
-  return recs[recs.length - 1].status;
+  const last = recs[recs.length - 1];
+  // Validade de 4 meses: após esse período retorna automaticamente para Pendente
+  if (last.date) {
+    const expiry = new Date(last.date + 'T00:00:00');
+    expiry.setMonth(expiry.getMonth() + 4);
+    const now = new Date(); now.setHours(0, 0, 0, 0);
+    if (now > expiry) return 'pendente';
+  }
+  return last.status;
+}
+
+// Retorna a data da última fiscalização registrada (string 'YYYY-MM-DD' ou '')
+function getLastInspDate(id) {
+  const recs = getInspections()[insKey(id)];
+  if (!recs || !recs.length) return '';
+  return recs[recs.length - 1].date || '';
 }
 
 function getLastInspection(id) {
@@ -1387,6 +1634,11 @@ function statusLabel(st) {
 // NAVEGAÇÃO
 // ═══════════════════════════════════════════════════════
 function navigate(pg) {
+  // Role guard: fiscal can only access their own pages
+  if (_currentUser && _currentUser.role === 'fiscal' && !['fiscalizacao','fiscal_estabs','meu_cadastro'].includes(pg)) {
+    showToast('Acesso restrito ao perfil Fiscal.','error');
+    pg = 'fiscalizacao';
+  }
   currentPage = pg;
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pageEl = document.getElementById('page-' + pg);
@@ -1397,7 +1649,10 @@ function navigate(pg) {
   const titles = {
     dashboard:'Dashboard', estabelecimentos:'Estabelecimentos',
     inativos:'Estabelecimentos Inativos',
-    fiscalizacao:'Fiscalizações', configuracoes:'Configurações'
+    fiscalizacao:'Registro de Fiscalizações',
+    fiscal_estabs:'Estabelecimentos para Fiscalizar',
+    configuracoes:'Configurações',
+    meu_cadastro:'Meu Cadastro'
   };
   document.getElementById('topbarTitle').textContent = titles[pg] || pg;
   closeSidebar();
@@ -1405,7 +1660,9 @@ function navigate(pg) {
   if (pg === 'estabelecimentos') renderTable();
   if (pg === 'inativos')         renderInativos();
   if (pg === 'fiscalizacao')     renderFiscalizacoes();
+  if (pg === 'fiscal_estabs')    renderFiscEstabs();
   if (pg === 'configuracoes')    renderConfig();
+  if (pg === 'meu_cadastro')     updateFiscalProfileDisplay();
 }
 
 function toggleSidebar() {
@@ -1456,7 +1713,7 @@ function filteredDataInativos() {
 
 function filteredFiscEstabs() {
   const q = (document.getElementById('searchFiscEstab')?.value||'').toLowerCase().trim();
-  return DADOS.filter(r => {
+  let result = DADOS.filter(r => {
     if (isDisabled(r.id)) return false;
     if (fiscEstabFilters.bairro    && r.bairro       !== fiscEstabFilters.bairro)    return false;
     if (fiscEstabFilters.categoria && r.categoria    !== fiscEstabFilters.categoria) return false;
@@ -1470,6 +1727,15 @@ function filteredFiscEstabs() {
     }
     return true;
   });
+  // Ordenação
+  if (fiscEstabSort === 'az') {
+    result.sort((a, b) => (a.nome_fantasia||'').localeCompare(b.nome_fantasia||'', 'pt-BR'));
+  } else if (fiscEstabSort === 'za') {
+    result.sort((a, b) => (b.nome_fantasia||'').localeCompare(a.nome_fantasia||'', 'pt-BR'));
+  } else if (fiscEstabSort === 'recentes') {
+    result.sort((a, b) => (getLastInspDate(b.id)||'').localeCompare(getLastInspDate(a.id)||''));
+  }
+  return result;
 }
 
 function setFilter(type, val) {
@@ -1656,18 +1922,24 @@ function setFiscFilter(v) {
 
 function resetFiscFilters() {
   fiscFilter = '';
+  fiscSort   = 'recentes';
   const si = document.getElementById('searchFisc');
   if (si) si.value = '';
+  const ss = document.getElementById('fiscSortSelect');
+  if (ss) ss.value = 'recentes';
   setFiscFilter('');
 }
 
 function resetFiscEstabFilters() {
   fiscEstabFilters = { q: '', bairro: '', categoria: '', risco: '', status: '' };
+  fiscEstabSort    = 'az';
   const si = document.getElementById('searchFiscEstab');
   if (si) si.value = '';
   ['fiscEstabFilterBairro','fiscEstabFilterCategoria','fiscEstabFilterRisco','fiscEstabFilterStatus'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
+  const ss = document.getElementById('fiscEstabSortSelect');
+  if (ss) ss.value = 'az';
   fiscEstabPage = 1;
   renderFiscEstabs();
 }
@@ -1842,7 +2114,13 @@ function renderFiscRegistros() {
     const hay = [r.estab?.nome_fantasia||'', r.rec.agent||'', r.estab?.bairro||'', r.rec.obs||''].join(' ').toLowerCase();
     return hay.includes(q);
   });
-  rows.sort((a,b) => (b.rec.date||'').localeCompare(a.rec.date||''));
+  // Ordenação dinâmica
+  if (fiscSort === 'az') {
+    rows.sort((a, b) => (a.estab?.nome_fantasia||'').localeCompare(b.estab?.nome_fantasia||'', 'pt-BR'));
+  } else {
+    // 'recentes': mais recentes primeiro (padrão)
+    rows.sort((a, b) => (b.rec.date||'').localeCompare(a.rec.date||''));
+  }
   document.getElementById('fiscCount').textContent = rows.length + ' registro'+(rows.length!==1?'s':'');
   const tbody = document.getElementById('fiscTableBody');
   const empty = document.getElementById('fiscEmpty');
@@ -2308,10 +2586,10 @@ function renderBairroTags() {
 
 function addBairro() {
   const input = document.getElementById('newBairroName');
-  const name  = input?.value.trim();
+  const name  = input?.value.trim().toUpperCase();
   if (!name) { showToast('Informe o nome do bairro!','error'); return; }
   const bairros = getBairros();
-  if (bairros.some(b => b.toLowerCase() === name.toLowerCase())) {
+  if (bairros.some(b => b.toUpperCase() === name)) {
     showToast('Bairro já cadastrado!','error'); return;
   }
   bairros.push(name);
@@ -2782,7 +3060,238 @@ function confirmDelete() {
 // ═══════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════
+// AUTH — LOGIN / LOGOUT
+// ═══════════════════════════════════════════════════════
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const senha  = document.getElementById('loginSenha').value;
+  const errEl  = document.getElementById('loginErr');
+  const btn    = document.getElementById('loginBtn');
+  errEl.style.display = 'none';
+  if (!email || !senha) { errEl.textContent='Preencha e-mail e senha.'; errEl.style.display='block'; return; }
+  btn.disabled = true; btn.textContent = 'Verificando...';
+  try {
+    // Query Firestore for user
+    const snap = await _USERS_REF.where('email','==',email).limit(1).get();
+    if (snap.empty) {
+      errEl.textContent = 'E-mail ou senha incorretos.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+    const doc = snap.docs[0];
+    const data = doc.data();
+    if (data.senha !== senha) {
+      errEl.textContent = 'E-mail ou senha incorretos.';
+      errEl.style.display = 'block';
+      btn.disabled = false; btn.textContent = 'Entrar';
+      return;
+    }
+    // Success
+    _currentUser = { uid: doc.id, email: data.email, role: data.role, profile: data.profile || null };
+    try { sessionStorage.setItem('visa_session', JSON.stringify(_currentUser)); } catch(e) {}
+    btn.textContent = 'Entrando...';
+    await boot(); // re-run boot with user set
+  } catch(err) {
+    errEl.textContent = 'Erro de conexão: ' + err.message;
+    errEl.style.display = 'block';
+    btn.disabled = false; btn.textContent = 'Entrar';
+  }
+}
+
+function doLogout() {
+  if (!confirm('Deseja sair do sistema?')) return;
+  _currentUser = null;
+  try { sessionStorage.removeItem('visa_session'); } catch(e) {}
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginSenha').value = '';
+  document.getElementById('loginErr').style.display = 'none';
+  document.getElementById('loginOverlay').style.display = 'flex';
+  document.getElementById('loginBtn').disabled = false;
+  document.getElementById('loginBtn').textContent = 'Entrar';
+  // Hide main UI
+  document.getElementById('loadingOverlay').style.display = 'none';
+}
+
+function applySidebarRole() {
+  if (!_currentUser) return;
+  const isFiscal = _currentUser.role === 'fiscal';
+  // Update sidebar user info
+  const displayName = _currentUser.profile?.nome || _currentUser.email.split('@')[0].toUpperCase();
+  document.getElementById('sidebarUserName').textContent = displayName;
+  document.getElementById('sidebarUserRole').textContent = isFiscal ? '🔍 Fiscal' : '🛡️ Administrativo';
+  document.getElementById('sidebarAvatar').textContent = isFiscal ? '🔍' : '🛡️';
+
+  if (isFiscal) {
+    // Ocultar seção e itens do admin
+    ['dashboard','estabelecimentos','inativos','configuracoes'].forEach(pg => {
+      const btn = document.querySelector(`.nav-item[data-page="${pg}"]`);
+      if (btn) btn.style.display = 'none';
+    });
+    // Ocultar o item genérico de fiscalizacao (será substituído pelo fiscal)
+    const fiscBtn = document.querySelector('.nav-item[data-page="fiscalizacao"]:not(#navFiscRegistro)');
+    if (fiscBtn) fiscBtn.style.display = 'none';
+    // Ocultar rótulo "Menu Principal" e "Sistema"
+    const secMain = document.getElementById('navSectionMenuPrincipal');
+    if (secMain) secMain.style.display = 'none';
+    const secSistema = document.getElementById('navSectionSistema');
+    if (secSistema) secSistema.style.display = 'none';
+    // Mostrar itens exclusivos do fiscal
+    ['navSectionFiscal','navFiscRegistro','navFiscEstabs','navMeuCadastro'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = '';
+    });
+    // Ocultar seção "Estabelecimentos para Fiscalizar" na página de fiscalizacao (já removida)
+    const estabSec = document.getElementById('fiscEstabSection');
+    if (estabSec) estabSec.style.display = 'none';
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// FISCAL PROFILE SETUP
+// ═══════════════════════════════════════════════════════
+function openFiscalSetup(isEdit) {
+  const modal = document.getElementById('modalFiscalSetup');
+  const closeBtn = document.getElementById('fiscalSetupClose');
+  const cancelBtn = document.getElementById('fiscalSetupCancelBtn');
+  const noteEl = document.getElementById('fsFirstAccessNote');
+  const titleEl = document.getElementById('fiscalSetupTitle');
+  const subEl = document.getElementById('fiscalSetupSub');
+
+  if (isEdit) {
+    titleEl.textContent = '✏️ Editar Meu Cadastro';
+    subEl.textContent = 'Atualize seus dados de fiscal';
+    closeBtn.style.display = 'block';
+    cancelBtn.style.display = 'block';
+    noteEl.style.display = 'none';
+  } else {
+    titleEl.textContent = '👤 Configure Seu Cadastro';
+    subEl.textContent = 'Primeiro acesso — configure seus dados para continuar';
+    closeBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
+    noteEl.style.display = 'block';
+  }
+
+  // Fill existing data if editing
+  const prof = _currentUser?.profile || {};
+  document.getElementById('fsNome').value      = prof.nome || '';
+  document.getElementById('fsMatricula').value = prof.matricula || '';
+  document.getElementById('fsTelefone').value  = prof.telefone || '';
+
+  // Populate equipe dropdown
+  const sel = document.getElementById('fsEquipe');
+  const agents = getAgents();
+  sel.innerHTML = '<option value="">Sem equipe vinculada</option>' +
+    agents.map(a => `<option value="${esc(a.name)}"${a.name===prof.equipe?' selected':''}>${esc(a.name)}</option>`).join('');
+
+  modal.classList.add('open');
+}
+
+function closeFiscalSetup() {
+  document.getElementById('modalFiscalSetup').classList.remove('open');
+}
+
+async function saveFiscalProfile() {
+  const nome      = document.getElementById('fsNome').value.trim().toUpperCase();
+  const matricula = document.getElementById('fsMatricula').value.trim().toUpperCase();
+  const telefone  = document.getElementById('fsTelefone').value.trim();
+  const equipe    = document.getElementById('fsEquipe').value;
+  if (!nome)      { showToast('Informe seu nome completo!','error'); return; }
+  if (!matricula) { showToast('Informe sua matrícula!','error'); return; }
+
+  const profile = { nome, matricula, telefone, equipe, configured: true };
+  _currentUser.profile = profile;
+  try { sessionStorage.setItem('visa_session', JSON.stringify(_currentUser)); } catch(e) {}
+
+  // Persist in Firestore
+  try {
+    await _USERS_REF.doc(_currentUser.uid).update({ profile });
+  } catch(err) { console.warn('Erro ao salvar perfil:', err); }
+
+  closeFiscalSetup();
+  updateFiscalProfileDisplay();
+  applySidebarRole(); // update display name
+  showToast('Cadastro salvo com sucesso! ✅','success');
+}
+
+function updateFiscalProfileDisplay() {
+  if (!_currentUser || _currentUser.role !== 'fiscal') return;
+  const prof = _currentUser.profile || {};
+  const el = (id, val) => { const e=document.getElementById(id); if(e) e.textContent=val||'—'; };
+  el('pfNome',      prof.nome);
+  el('pfMatricula', prof.matricula);
+  el('pfTelefone',  prof.telefone);
+  el('pfEquipe',    prof.equipe || 'Sem equipe vinculada');
+  // Also update sidebar name
+  const nameEl = document.getElementById('sidebarUserName');
+  if (nameEl && prof.nome) nameEl.textContent = prof.nome;
+}
+
+// ═══════════════════════════════════════════════════════
+// AUTO-UPPERCASE — ALL FORM INPUTS
+// ═══════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  // IDs that should NOT be uppercased
+  const skipIds = new Set(['estCnae','estLicenca','inspDate','editFiscDate','loginEmail','loginSenha','fsTelefone']);
+
+  function applyUppercase(el) {
+    if (!el || skipIds.has(el.id)) return;
+    if (el.type === 'date' || el.type === 'email' || el.type === 'password' || el.type === 'tel') return;
+    if (el.tagName === 'SELECT') return;
+    const pos = el.selectionStart;
+    el.value = el.value.toUpperCase();
+    try { el.setSelectionRange(pos, pos); } catch(e) {}
+  }
+
+  document.addEventListener('input', e => {
+    const el = e.target;
+    if (el.classList.contains('form-input') || el.classList.contains('auto-upper') ||
+        el.classList.contains('search-input') || el.id === 'newBairroName' ||
+        el.id === 'newAgentName' || el.id === 'newAgentRole') {
+      applyUppercase(el);
+    }
+  });
+});
+
+// ═══════════════════════════════════════════════════════
+// ALTERAR SENHA DO USUÁRIO
+// ═══════════════════════════════════════════════════════
+async function changeUserPassword(newPassId, confirmId) {
+  const newPass = (document.getElementById(newPassId)?.value || '').trim();
+  const confirm = (document.getElementById(confirmId)?.value || '').trim();
+  if (!newPass || newPass.length < 6) {
+    showToast('A senha deve ter no mínimo 6 caracteres!', 'error');
+    return;
+  }
+  if (newPass !== confirm) {
+    showToast('As senhas não coincidem!', 'error');
+    return;
+  }
+  try {
+    const user = _fbAuth.currentUser;
+    if (!user) { showToast('Usuário não autenticado!', 'error'); return; }
+    await user.updatePassword(newPass);
+    document.getElementById(newPassId).value = '';
+    document.getElementById(confirmId).value = '';
+    showToast('Senha alterada com sucesso! ✅', 'success');
+  } catch (err) {
+    if (err.code === 'auth/requires-recent-login') {
+      showToast('Por segurança, faça login novamente para alterar a senha.', 'error');
+    } else {
+      showToast('Erro ao alterar senha: ' + (err.message || err.code), 'error');
+    }
+  }
+}
+
 async function boot() {
+  // If not logged in, show login screen and wait
+  if (!_currentUser) {
+    document.getElementById('loginOverlay').style.display = 'flex';
+    return; // boot() will be re-called after login
+  }
+  document.getElementById('loginOverlay').style.display = 'none';
+  applySidebarRole();
   const loadEl = document.getElementById('loadingOverlay');
   if (loadEl) loadEl.style.display = 'flex';
 
@@ -2830,7 +3339,16 @@ function init() {
   refreshAllBairroDropdowns();
   initCatDatalist();
   updateTopBadges();
-  renderDashboard();
+  // Route based on role
+  if (_currentUser && _currentUser.role === 'fiscal') {
+    navigate('fiscalizacao');
+    updateFiscalProfileDisplay();
+    if (!_currentUser.profile || !_currentUser.profile.configured) {
+      openFiscalSetup(false);
+    }
+  } else {
+    renderDashboard();
+  }
 }
 
 boot();
