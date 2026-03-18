@@ -798,11 +798,6 @@ input:checked + .slider::before { transform: translateX(18px); }
           <option value="BAIXO RISCO">Baixo Risco</option>
           <option value="ALTO RISCO">Alto Risco</option>
         </select>
-        <select class="filter-select" id="filterStatus" onchange="onFilterStatus()">
-          <option value="">Todos</option>
-          <option value="ativo">✅ Ativo</option>
-          <option value="inativo">🚫 Inativo</option>
-        </select>
         <button class="btn btn-ghost btn-sm" onclick="resetEstabFilters()" title="Limpar todos os filtros" style="border-radius:50px;padding:6px 14px;font-size:12px">↺ Resetar</button>
       </div>
 
@@ -1691,10 +1686,8 @@ function closeSidebar() {
 function filteredData() {
   const q = filters.q.toLowerCase().trim();
   return DADOS.filter(r => {
-    const disabled = isDisabled(r.id);
-    // Status filter: ativo, inativo, or '' (default = ativo only)
-    if (filters.status === 'inativo') { if (!disabled) return false; }
-    else { if (disabled) return false; } // '' or 'ativo': show only active
+    // Sempre mostrar apenas estabelecimentos ATIVOS
+    if (isDisabled(r.id)) return false;
     if (filters.bairro    && r.bairro       !== filters.bairro)    return false;
     if (filters.categoria && r.categoria    !== filters.categoria) return false;
     if (filters.risco     && r.classe_risco !== filters.risco)     return false;
@@ -1757,7 +1750,6 @@ function setFilter(type, val) {
 
 function onFilterCategoria() { filters.categoria = document.getElementById('filterCategoria').value; currentEstabPage = 1; renderTable(); }
 function onFilterRisco()     { filters.risco      = document.getElementById('filterRisco').value;     currentEstabPage = 1; renderTable(); }
-function onFilterStatus()    { filters.status     = document.getElementById('filterStatus').value;    currentEstabPage = 1; renderTable(); }
 function onSearch() {
   filters.q = document.getElementById('searchInput').value;
   currentEstabPage = 1;
@@ -1956,10 +1948,10 @@ function resetFiscEstabFilters() {
 }
 
 function resetEstabFilters() {
-  filters = { q: '', bairro: '', categoria: '', risco: '', status: '' };
+  filters = { q: '', bairro: '', categoria: '', risco: '' };
   const si = document.getElementById('searchInput');
   if (si) { si.value = ''; document.getElementById('searchClear').style.display = 'none'; }
-  ['filterBairro','filterCategoria','filterRisco','filterStatus'].forEach(id => {
+  ['filterBairro','filterCategoria','filterRisco'].forEach(id => {
     const el = document.getElementById(id); if (el) el.value = '';
   });
   currentEstabPage = 1;
@@ -2761,7 +2753,7 @@ function doImportInativos(e) {
 
       let adicionados  = 0;
       let jaInativos   = 0;
-      let reativados   = 0;
+      let jaAtivos     = 0;
       let nomes_adicionados = [];
 
       lista.forEach(item => {
@@ -2773,13 +2765,13 @@ function doImportInativos(e) {
         );
 
         if (existente) {
-          // Já existe: apenas garante que está na lista de inativos
+          // Já existe: verifica seu status
           if (disabledSet.has(String(existente.id))) {
+            // Já está inativo
             jaInativos++;
           } else {
-            disabled.push(existente.id);
-            disabledSet.add(String(existente.id));
-            reativados++;
+            // Já existe como ATIVO - não fazer nada (deixar ativo)
+            jaAtivos++;
           }
         } else {
           // Não existe: cria novo registro no custom como inativo
@@ -2817,7 +2809,7 @@ function doImportInativos(e) {
       const resultEl = document.getElementById('importInativosResult');
       let cor, icon;
       if (adicionados > 0) { cor = 'var(--success-bg)'; icon = '✅'; }
-      else if (reativados > 0) { cor = 'var(--warning-bg)'; icon = '⚠️'; }
+      else if (jaAtivos > 0 || jaInativos > 0) { cor = 'var(--warning-bg)'; icon = '⚠️'; }
       else { cor = '#f0f4ff'; icon = 'ℹ️'; }
 
       resultEl.style.display = 'block';
@@ -2827,8 +2819,8 @@ function doImportInativos(e) {
         <div style="font-weight:700;font-size:14px;margin-bottom:8px">${icon} Importação concluída — ${total} registro${total!==1?'s':''} no arquivo</div>
         <div style="display:grid;grid-template-columns:repeat(3,auto);gap:6px 24px;max-width:420px">
           <div>📥 <strong>${adicionados}</strong> novo${adicionados!==1?'s':''} inserido${adicionados!==1?'s':''}</div>
-          <div>🔄 <strong>${reativados}</strong> marcado${reativados!==1?'s':''} como inativo</div>
-          <div>✔️ <strong>${jaInativos}</strong> já estava${jaInativos!==1?'m':''} inativo${jaInativos!==1?'s':''}</div>
+          <div>✔️ <strong>${jaAtivos}</strong> já existia${jaAtivos!==1?'m':''} ativo${jaAtivos!==1?'s':''}</div>
+          <div>🔄 <strong>${jaInativos}</strong> já estava${jaInativos!==1?'m':''} inativo${jaInativos!==1?'s':''}</div>
         </div>
         ${nomes_adicionados.length ? `
           <div style="margin-top:10px;font-size:12px;color:var(--text-muted)">
@@ -2837,7 +2829,7 @@ function doImportInativos(e) {
           </div>` : ''}
       `;
 
-      showToast(`Inativos restaurados: ${adicionados} adicionado${adicionados!==1?'s':''}, ${reativados} atualizado${reativados!==1?'s':''}.`, 'success');
+      showToast(`Inativos restaurados: ${adicionados} adicionado${adicionados!==1?'s':''}, ${jaAtivos} já ativo${jaAtivos!==1?'s':''}.`, 'success');
 
     } catch(err) {
       showToast('Erro ao processar o arquivo: ' + err.message, 'error');

@@ -749,10 +749,6 @@ input:checked + .slider::before { transform:translateX(18px); }
           <option value="BAIXO RISCO">Baixo Risco</option>
           <option value="ALTO RISCO">Alto Risco</option>
         </select>
-        <select class="chip-select" id="filterStatus" onchange="onFilterStatus()">
-          <option value="">Ativos</option>
-          <option value="inativo">🚫 Inativos</option>
-        </select>
         <select class="chip-select" id="filterSort" onchange="estabSort=this.value;currentEstabPage=1;renderTable()">
           <option value="az">🔤 A → Z</option>
           <option value="za">🔤 Z → A</option>
@@ -1526,9 +1522,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 function filteredData() {
   const q=filters.q.toLowerCase().trim();
   let result=DADOS.filter(r=>{
-    const disabled=isDisabled(r.id);
-    if (filters.status==='inativo'){ if(!disabled)return false; }
-    else { if(disabled)return false; }
+    // Sempre mostrar apenas estabelecimentos ATIVOS
+    if(isDisabled(r.id))return false;
     if (filters.bairro    && r.bairro       !==filters.bairro)    return false;
     if (filters.categoria && r.categoria    !==filters.categoria) return false;
     if (filters.risco     && r.classe_risco !==filters.risco)     return false;
@@ -1578,13 +1573,12 @@ function filteredFiscEstabs() {
 function setFilter(type,val) { filters[type]=val; currentEstabPage=1; if(currentPage==='estabelecimentos')renderTable(); }
 function onFilterCategoria() { filters.categoria=document.getElementById('filterCategoria').value; currentEstabPage=1; renderTable(); }
 function onFilterRisco()     { filters.risco=document.getElementById('filterRisco').value; currentEstabPage=1; renderTable(); }
-function onFilterStatus()    { filters.status=document.getElementById('filterStatus').value; currentEstabPage=1; renderTable(); }
 function onSearch()          { filters.q=document.getElementById('searchInput').value; currentEstabPage=1; document.getElementById('searchClear').style.display=filters.q?'block':'none'; renderTable(); }
 function clearSearch()       { document.getElementById('searchInput').value=''; filters.q=''; document.getElementById('searchClear').style.display='none'; renderTable(); }
 
 function resetEstabFilters() {
-  filters={q:'',bairro:'',categoria:'',risco:'',status:''}; estabSort='az';
-  ['searchInput','filterBairro','filterCategoria','filterRisco','filterStatus'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  filters={q:'',bairro:'',categoria:'',risco:''}; estabSort='az';
+  ['searchInput','filterBairro','filterCategoria','filterRisco'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   const ss=document.getElementById('filterSort'); if(ss)ss.value='az';
   currentEstabPage=1; renderTable();
 }
@@ -2507,12 +2501,13 @@ function doImportInativos(e) {
       lista=lista.filter(r=>r&&r.nome_fantasia&&r.nome_fantasia.trim());
       if(!lista.length){showToast('Nenhum registro válido.','error');return;}
       const custom=getCustom();const disabled=getDisabledIds();const disabledSet=new Set(disabled.map(String));
-      let adicionados=0;
+      let adicionados=0,jaInativos=0,jaAtivos=0;
       lista.forEach(item=>{
         const nomeNorm=item.nome_fantasia.trim().toUpperCase();
         const existente=DADOS.find(d=>(d.nome_fantasia||'').trim().toUpperCase()===nomeNorm);
         if(existente){
-          if(!disabledSet.has(String(existente.id))){disabled.push(existente.id);disabledSet.add(String(existente.id));}
+          if(disabledSet.has(String(existente.id))){jaInativos++;}
+          else{jaAtivos++;}
         } else {
           const novoId=Date.now()+Math.floor(Math.random()*100000);
           const novo={id:novoId,nome_fantasia:item.nome_fantasia.trim(),razao_social:item.razao_social||'',endereco:item.endereco||'',bairro:item.bairro||'',categoria:item.categoria?item.categoria.trim().toUpperCase():'',tipo_atividade:item.tipo_atividade?item.tipo_atividade.trim().toUpperCase():'',cnae:item.cnae||'',classe_risco:item.classe_risco||'',ultimo_licenciamento:item.ultimo_licenciamento||'',orgao_licenciador:item.orgao_licenciador||''};
@@ -2520,7 +2515,7 @@ function doImportInativos(e) {
         }
       });
       saveCustom(custom);saveDisabledIds(disabled);rebuildDADOS();refreshAllCategoryDropdowns();refreshAfterChange();
-      showToast(`Importação: ${adicionados} adicionado(s).`,'success');
+      showToast(`Inativos: ${adicionados} novo(s), ${jaAtivos} já ativo(s).`,'success');
     } catch(err){showToast('Erro: '+err.message,'error');}
   });
 }
