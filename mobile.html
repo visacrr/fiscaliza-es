@@ -715,7 +715,7 @@ input:checked + .slider::before { transform:translateX(18px); }
         </div>
       </div>
       <div class="dash-section">
-        <div class="dash-section-head"><h3>📍 Por Bairro</h3></div>
+        <div class="dash-section-head"><h3>📍 Por Localidade</h3></div>
         <div id="bairroChart"></div>
       </div>
       <div class="dash-section">
@@ -742,7 +742,7 @@ input:checked + .slider::before { transform:translateX(18px); }
         </div>
       </div>
       <div class="chips-scroll">
-        <select class="chip-select" id="filterBairro" onchange="setFilter('bairro',this.value)"><option value="">Todos os bairros</option></select>
+        <select class="chip-select" id="filterBairro" onchange="setFilter('bairro',this.value)"><option value="">Todas as localidades</option></select>
         <select class="chip-select" id="filterCategoria" onchange="onFilterCategoria()"><option value="">Todas categorias</option></select>
         <select class="chip-select" id="filterRisco" onchange="onFilterRisco()">
           <option value="">Todos os riscos</option>
@@ -808,7 +808,7 @@ input:checked + .slider::before { transform:translateX(18px); }
         </div>
       </div>
       <div class="chips-scroll">
-        <select class="chip-select" id="fiscEstabFilterBairro" onchange="fiscEstabFilters.bairro=this.value;fiscEstabPage=1;renderFiscEstabs()"><option value="">Todos os bairros</option></select>
+        <select class="chip-select" id="fiscEstabFilterBairro" onchange="fiscEstabFilters.bairro=this.value;fiscEstabPage=1;renderFiscEstabs()"><option value="">Todas as localidades</option></select>
         <select class="chip-select" id="fiscEstabFilterCategoria" onchange="fiscEstabFilters.categoria=this.value;fiscEstabPage=1;renderFiscEstabs()"><option value="">Todas categorias</option></select>
         <select class="chip-select" id="fiscEstabFilterRisco" onchange="fiscEstabFilters.risco=this.value;fiscEstabPage=1;renderFiscEstabs()">
           <option value="">Todos os riscos</option>
@@ -891,11 +891,11 @@ input:checked + .slider::before { transform:translateX(18px); }
 
       <div class="config-section">
         <div class="config-section-head">
-          <div><h3>📍 Bairros e Distritos</h3><p>Gerencie os bairros disponíveis</p></div>
+          <div><h3>📍 Localidades</h3><p>Gerencie as localidades disponíveis</p></div>
         </div>
         <div class="config-body">
           <div style="display:flex;gap:8px;margin-bottom:10px">
-            <input class="form-input-m" id="newBairroName" placeholder="Nome do bairro…" style="flex:1">
+            <input class="form-input-m" id="newBairroName" placeholder="Nome da localidade…" style="flex:1">
             <button class="btn-full-primary" onclick="addBairro()" style="flex:0 0 auto;padding:13px 16px">+</button>
           </div>
           <div id="bairroTagList" style="margin-top:6px"></div>
@@ -1032,7 +1032,7 @@ input:checked + .slider::before { transform:translateX(18px); }
       </div>
       <div class="form-row-m">
         <div class="form-group-m">
-          <label>Bairro *</label>
+          <label>Localidade *</label>
           <select class="form-select-m form-select" id="estBairro"><option value="">Selecionar…</option></select>
         </div>
         <div class="form-group-m">
@@ -1189,15 +1189,15 @@ input:checked + .slider::before { transform:translateX(18px); }
   </div>
 </div>
 
-<!-- Confirmar Excluir Bairro -->
+<!-- Confirmar Excluir Localidade -->
 <div class="overlay-m" id="modalConfirmDelBairro">
   <div class="sheet" style="max-height:60vh">
     <div class="sheet-handle"></div>
     <div class="confirm-body">
       <div class="cb-icon">🗺️</div>
-      <h3>Excluir Bairro</h3>
+      <h3>Excluir Localidade</h3>
       <div class="cb-name" id="delBairroLabel">—</div>
-      <p>O bairro não estará mais disponível. Cadastros existentes não serão alterados.</p>
+      <p>A localidade não estará mais disponível. Cadastros existentes não serão alterados.</p>
       <div class="confirm-btn-row">
         <button class="btn-full-ghost" onclick="closeModal('modalConfirmDelBairro')">Cancelar</button>
         <button class="btn-full-primary" style="background:var(--danger);box-shadow:none" onclick="confirmRemoveBairro()">🗑️ Excluir</button>
@@ -1309,6 +1309,7 @@ const _fbApp   = firebase.initializeApp(firebaseConfig);
 const _db      = firebase.firestore(_fbApp);
 const _STATE_REF = _db.collection('visa_state').doc('app');
 const _BASE_REF  = _db.collection('visa_state').doc('base_data');
+const _INATIVOS_REF = _db.collection('visa_state').doc('inativos_data');
 const _USERS_REF = _db.collection('visa_usuarios');
 const _fbAuth    = firebase.auth(_fbApp);
 
@@ -1318,7 +1319,8 @@ let _currentUser = null;
 const _fbCache = {
   inspections:{}, agents:[], config:{licenca:true},
   custom:[], deleted:[], disabled:[], edited:{},
-  bairros: ['ESTRADA DE AUTAZES', 'COMUNIDADE BOA VISTA','ESTRADA DO MANAQUIRI','JACAMIM','P  A PANELAO','PACATUBA','LAGO CASTANHO','ORGAOS PUBLICOS','UBS E OUTRAS UNIDADES DE SAUDE','RAMAL TIMBO','COMUNIDADE DO TILHEIRO','HOTEIS E POUSADAS','LAGO TILHEIRO','PURUPURU','PURUPURU RIO','ESCOLAS','SAMAUMA','LAGO JANAUACA','SAO JOSE','RAMAL FLORESTA','MAMORI I','LAGO TAPAGEM','MERCADO CENTRAL','CENTRO','BAIRRO NOVO','VISTA ALEGRE','NOVO HORIZONTE','NOVA ESPERANCA','SEBASTIAO BORGES']
+  bairros: ['ESTRADA DE AUTAZES', 'COMUNIDADE BOA VISTA','ESTRADA DO MANAQUIRI','JACAMIM','P  A PANELAO','PACATUBA','LAGO CASTANHO','ORGAOS PUBLICOS','UBS E OUTRAS UNIDADES DE SAUDE','RAMAL TIMBO','COMUNIDADE DO TILHEIRO','HOTEIS E POUSADAS','LAGO TILHEIRO','PURUPURU','PURUPURU RIO','ESCOLAS','SAMAUMA','LAGO JANAUACA','SAO JOSE','RAMAL FLORESTA','MAMORI I','LAGO TAPAGEM','MERCADO CENTRAL','CENTRO','BAIRRO NOVO','VISTA ALEGRE','NOVO HORIZONTE','NOVA ESPERANCA','SEBASTIAO BORGES'],
+  inativos_data: []
 };
 
 function _saveField(f,v){ _STATE_REF.set({[f]:v},{merge:true}).catch(e=>console.error('Firestore:',f,e)); }
@@ -1340,6 +1342,15 @@ function getEditedMap()    { return _fbCache.edited; }
 function saveEditedMap(d)  { _fbCache.edited=d; _saveField('edited',d); }
 function getBairros()      { return _fbCache.bairros&&_fbCache.bairros.length?_fbCache.bairros:['Centro']; }
 function saveBairros(d)    { _fbCache.bairros=d; _saveField('bairros',d); }
+
+// ─── Dados completos dos inativos (doc separado) ────────
+function getInativosData()  { return _fbCache.inativos_data || []; }
+async function saveInativosData(lista) {
+  _fbCache.inativos_data = lista;
+  try {
+    await _INATIVOS_REF.set({ estabelecimentos: lista, updatedAt: new Date().toISOString() });
+  } catch(e) { console.error('Firestore write [inativos_data]:', e); }
+}
 function insKey(id)        { return String(id); }
 
 function getStatusFor(id) {
@@ -1970,7 +1981,7 @@ function renderBairroTags() {
   const list=document.getElementById('bairroTagList');
   if (!list) return;
   const bairros=getBairros();
-  if (!bairros.length) { list.innerHTML='<span style="font-size:13px;color:var(--text-muted)">Nenhum bairro cadastrado.</span>'; return; }
+  if (!bairros.length) { list.innerHTML='<span style="font-size:13px;color:var(--text-muted)">Nenhuma localidade cadastrada.</span>'; return; }
   list.innerHTML=bairros.map((b,i)=>`
     <span class="bairro-tag-m">📍 ${esc(b)}<button onclick="removeBairro(${i})">✕</button></span>`).join('');
 }
@@ -1978,15 +1989,15 @@ function renderBairroTags() {
 function addBairro() {
   const input=document.getElementById('newBairroName');
   const name=input?.value.trim().toUpperCase();
-  if (!name) { showToast('Informe o nome do bairro!','error'); return; }
+  if (!name) { showToast('Informe o nome da localidade!','error'); return; }
   const bairros=getBairros();
-  if (bairros.some(b=>b.toUpperCase()===name)) { showToast('Bairro já cadastrado!','error'); return; }
+  if (bairros.some(b=>b.toUpperCase()===name)) { showToast('Localidade já cadastrada!','error'); return; }
   bairros.push(name);
   saveBairros(bairros);
   if (input) input.value='';
   renderBairroTags();
   refreshAllBairroDropdowns();
-  showToast('Bairro adicionado! ✅','success');
+  showToast('Localidade adicionada! ✅','success');
 }
 
 let _pendingDelBairroIdx=null;
@@ -2009,7 +2020,7 @@ function confirmRemoveBairro() {
   renderBairroTags();
   refreshAllBairroDropdowns();
   closeModal('modalConfirmDelBairro');
-  showToast('Bairro removido.','success');
+  showToast('Localidade removida.','success');
   _pendingDelBairroIdx=null;
 }
 
@@ -2190,7 +2201,7 @@ function refreshAllBairroDropdowns() {
   const opts=bairros.map(b=>`<option value="${esc(b)}">${esc(b)}</option>`).join('');
   ['filterBairro','fiscEstabFilterBairro'].forEach(id=>{
     const el=document.getElementById(id); if(!el)return; const cur=el.value;
-    el.innerHTML=el.id==='filterBairro'?'<option value="">Todos os bairros</option>'+opts:'<option value="">Todos os bairros</option>'+opts;
+    el.innerHTML=el.id==='filterBairro'?'<option value="">Todas as localidades</option>'+opts:'<option value="">Todas as localidades</option>'+opts;
     if(cur)el.value=cur;
   });
   const eb=document.getElementById('estBairro');
@@ -2259,7 +2270,7 @@ function saveEstab() {
   const nome  =document.getElementById('estNome').value.trim();
   const bairro=document.getElementById('estBairro').value;
   if (!nome)   { showToast('Informe o Nome Fantasia!','error'); return; }
-  if (!bairro) { showToast('Selecione o Bairro!','error'); return; }
+  if (!bairro) { showToast('Selecione a Localidade!','error'); return; }
   const payload={
     nome_fantasia:       nome,
     razao_social:        document.getElementById('estRazao').value.trim(),
@@ -2300,10 +2311,16 @@ let _pendingDeactivateId2=null;
 function toggleEstab(id) {
   const disabled=isDisabled(id);
   if (disabled) {
+    // Reativação: remove do disabled e da coleção de inativos
     const list=getDisabledIds();
     const idx=list.map(String).indexOf(String(id));
     if(idx>=0)list.splice(idx,1);
     saveDisabledIds(list);
+
+    // Remove da coleção de inativos no Firestore
+    const listaInativos=getInativosData().filter(x=>String(x.id)!==String(id));
+    saveInativosData(listaInativos);
+
     showToast('Estabelecimento ativado! ✅','success');
     refreshAfterChange();
   } else {
@@ -2314,14 +2331,27 @@ function toggleEstab(id) {
   }
 }
 
-function confirmDeactivate() {
+async function confirmDeactivate() {
   if (_pendingDeactivateId===null) return;
+  const id=_pendingDeactivateId;
+
+  // Move o registro completo para a coleção de inativos no Firestore
+  const r=DADOS.find(d=>d.id===id);
+  if (r) {
+    const lista=getInativosData();
+    if (!lista.some(x=>String(x.id)===String(id))) {
+      lista.push({...r, desativadoEm: new Date().toISOString()});
+      await saveInativosData(lista);
+    }
+  }
+
+  // Mantém o ID na lista disabled (usada para filtros em memória)
   const list=getDisabledIds();
-  list.push(_pendingDeactivateId);
+  list.push(id);
   saveDisabledIds(list);
   closeModal('modalConfirmDel');
-  const r=DADOS.find(d=>d.id===_pendingDeactivateId);
-  showToast((r?r.nome_fantasia:'Estabelecimento')+' desativado.','success');
+  const rec=DADOS.find(d=>d.id===id);
+  showToast((rec?rec.nome_fantasia:'Estabelecimento')+' desativado.','success');
   _pendingDeactivateId=null;
   refreshAfterChange();
 }
@@ -2374,7 +2404,7 @@ function imprimirEstabelecimentos() {
     const stBg={fiscalizado:'#e8f8ee',pendente:'#fff4e0',irregular:'#fdeef0'}[st]||'#f5f5f5';
     return `<tr><td>${i+1}</td><td>${esc(r.nome_fantasia)}</td><td>${esc(r.razao_social)||'—'}</td><td>${esc(r.endereco)||'—'}</td><td>${esc(r.bairro)||'—'}</td><td>${esc(r.categoria)||'—'}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:700;background:${stBg};color:${stColor}">${stTxt}</span></td><td>${last?formatDate(last.date):'—'}</td></tr>`;
   }).join('');
-  const html=`<div class="print-header"><div><div style="font-size:11px;opacity:.85;margin-bottom:3px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div><h1>VISA Careiro</h1><div style="font-size:12px;opacity:.9;margin-top:3px">Vigilância Sanitária — Lista de Estabelecimentos</div></div><div class="print-meta"><strong>Data:</strong> ${dateStr} | <strong>Hora:</strong> ${timeStr}</div></div><div class="print-body"><div class="print-section-title">📊 Resumo</div><div class="print-summary"><div class="print-stat"><div class="pv">${data.length}</div><div class="pl">Total</div></div><div class="print-stat"><div class="pv" style="color:#2a6e47">${cFisc}</div><div class="pl">Fiscalizados</div></div><div class="print-stat"><div class="pv" style="color:#c0392b">${cIrreg}</div><div class="pl">Irregulares</div></div><div class="print-stat"><div class="pv" style="color:#7a4e00">${cPend}</div><div class="pl">Pendentes</div></div></div><div class="print-section-title">🏪 Estabelecimentos</div><table><thead><tr><th>#</th><th>Nome Fantasia</th><th>Razão Social</th><th>Endereço</th><th>Bairro</th><th>Categoria</th><th>Status</th><th>Últ. Vistoria</th></tr></thead><tbody>${rows}</tbody></table><div class="print-footer"><div><div style="font-size:11px;color:#555;margin-bottom:30px">Responsável pela Emissão:</div><div class="sign-line">Chefe da Vigilância Sanitária</div></div><div><div style="font-size:11px;color:#555;margin-bottom:30px">Servidor Responsável:</div><div class="sign-line">Fiscal Sanitário</div></div></div></div>`;
+  const html=`<div class="print-header"><div><div style="font-size:11px;opacity:.85;margin-bottom:3px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div><h1>VISA Careiro</h1><div style="font-size:12px;opacity:.9;margin-top:3px">Vigilância Sanitária — Lista de Estabelecimentos</div></div><div class="print-meta"><strong>Data:</strong> ${dateStr} | <strong>Hora:</strong> ${timeStr}</div></div><div class="print-body"><div class="print-section-title">📊 Resumo</div><div class="print-summary"><div class="print-stat"><div class="pv">${data.length}</div><div class="pl">Total</div></div><div class="print-stat"><div class="pv" style="color:#2a6e47">${cFisc}</div><div class="pl">Fiscalizados</div></div><div class="print-stat"><div class="pv" style="color:#c0392b">${cIrreg}</div><div class="pl">Irregulares</div></div><div class="print-stat"><div class="pv" style="color:#7a4e00">${cPend}</div><div class="pl">Pendentes</div></div></div><div class="print-section-title">🏪 Estabelecimentos</div><table><thead><tr><th>#</th><th>Nome Fantasia</th><th>Razão Social</th><th>Endereço</th><th>Localidade</th><th>Categoria</th><th>Status</th><th>Últ. Vistoria</th></tr></thead><tbody>${rows}</tbody></table><div class="print-footer"><div><div style="font-size:11px;color:#555;margin-bottom:30px">Responsável pela Emissão:</div><div class="sign-line">Chefe da Vigilância Sanitária</div></div><div><div style="font-size:11px;color:#555;margin-bottom:30px">Servidor Responsável:</div><div class="sign-line">Fiscal Sanitário</div></div></div></div>`;
   _openPrintWindow('Lista de Estabelecimentos',data.length+' estabelecimentos',html);
 }
 
@@ -2398,7 +2428,7 @@ function imprimirFiscalizacoes() {
     const stBg={fiscalizado:'#e8f8ee',pendente:'#fff4e0',irregular:'#fdeef0'}[r.rec.status]||'#f5f5f5';
     return `<tr><td>${i+1}</td><td>${esc(r.estab?.nome_fantasia||'ID '+r.id)}</td><td>${esc(r.estab?.bairro||'—')}</td><td>${formatDate(r.rec.date)}</td><td>${esc(r.rec.agent||'—')}</td><td><span style="display:inline-block;padding:2px 8px;border-radius:50px;font-size:10px;font-weight:700;background:${stBg};color:${stColor}">${stTxt}</span></td><td>${esc(r.rec.obs||'—')}</td></tr>`;
   }).join('');
-  const html=`<div class="print-header"><div><div style="font-size:11px;opacity:.85;margin-bottom:3px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div><h1>VISA Careiro</h1><div style="font-size:12px;opacity:.9;margin-top:3px">Vigilância Sanitária — Registro de Fiscalizações</div></div><div class="print-meta"><strong>Data:</strong> ${dateStr} | <strong>Hora:</strong> ${timeStr}</div></div><div class="print-body"><div class="print-section-title">📋 Fiscalizações</div><table><thead><tr><th>#</th><th>Estabelecimento</th><th>Bairro</th><th>Data</th><th>Equipe</th><th>Status</th><th>Observação</th></tr></thead><tbody>${tableRows}</tbody></table><div class="print-footer"><div><div style="font-size:11px;color:#555;margin-bottom:30px">Responsável pela Emissão:</div><div class="sign-line">Chefe da Vigilância Sanitária</div></div><div><div style="font-size:11px;color:#555;margin-bottom:30px">Servidor Responsável:</div><div class="sign-line">Fiscal Sanitário</div></div></div></div>`;
+  const html=`<div class="print-header"><div><div style="font-size:11px;opacity:.85;margin-bottom:3px;letter-spacing:1px;text-transform:uppercase">Prefeitura Municipal de Careiro — AM</div><h1>VISA Careiro</h1><div style="font-size:12px;opacity:.9;margin-top:3px">Vigilância Sanitária — Registro de Fiscalizações</div></div><div class="print-meta"><strong>Data:</strong> ${dateStr} | <strong>Hora:</strong> ${timeStr}</div></div><div class="print-body"><div class="print-section-title">📋 Fiscalizações</div><table><thead><tr><th>#</th><th>Estabelecimento</th><th>Localidade</th><th>Data</th><th>Equipe</th><th>Status</th><th>Observação</th></tr></thead><tbody>${tableRows}</tbody></table><div class="print-footer"><div><div style="font-size:11px;color:#555;margin-bottom:30px">Responsável pela Emissão:</div><div class="sign-line">Chefe da Vigilância Sanitária</div></div><div><div style="font-size:11px;color:#555;margin-bottom:30px">Servidor Responsável:</div><div class="sign-line">Fiscal Sanitário</div></div></div></div>`;
   _openPrintWindow('Registro de Fiscalizações',rows.length+' registros',html);
 }
 
@@ -2408,7 +2438,24 @@ function executarImpressao() { window.print(); }
 // BACKUP / IMPORT
 // ═══════════════════════════════════════════════════════
 function backupData() {
-  const data={version:2,exportedAt:new Date().toISOString(),inspections:getInspections(),agents:getAgents(),config:getConfig(),custom:getCustom(),deleted:getDeletedIds(),disabled:getDisabledIds(),edited:getEditedMap(),estabelecimentos:_DADOS_ORIGINAL.slice()};
+  const disabledSet=new Set(getDisabledIds().map(String));
+  const baseAtivos=_DADOS_ORIGINAL.filter(r=>!disabledSet.has(String(r.id)));
+  const inativos=getInativosData();
+  const data={
+    version:3,
+    exportedAt:new Date().toISOString(),
+    inspections:getInspections(),
+    agents:getAgents(),
+    config:getConfig(),
+    custom:getCustom(),
+    deleted:getDeletedIds(),
+    disabled:getDisabledIds(),
+    edited:getEditedMap(),
+    // Apenas ativos (visa_state/base_data)
+    estabelecimentos:baseAtivos,
+    // Inativos em seção separada (visa_state/inativos_data)
+    inativos_data:inativos
+  };
   downloadJSON(data,'backup_visa_'+new Date().toISOString().slice(0,10)+'.json');
   showToast('Backup exportado! ✅','success');
 }
@@ -2425,12 +2472,23 @@ function doImport(e) {
       if(data.deleted)     saveDeletedIds(data.deleted);
       if(data.disabled)    saveDisabledIds(data.disabled);
       if(data.edited)      saveEditedMap(data.edited);
+
+      // Restaura base dos ATIVOS — nunca mistura com inativos
       if(Array.isArray(data.estabelecimentos)&&data.estabelecimentos.length>0){
-        await _BASE_REF.set({estabelecimentos:data.estabelecimentos,importedAt:new Date().toISOString(),total:data.estabelecimentos.length});
+        const disabledSet=new Set((data.disabled||[]).map(String));
+        const apenasAtivos=data.estabelecimentos.filter(r=>!disabledSet.has(String(r.id)));
+        await _BASE_REF.set({estabelecimentos:apenasAtivos,importedAt:new Date().toISOString(),total:apenasAtivos.length});
         _DADOS_ORIGINAL.length=0;
-        data.estabelecimentos.forEach(r=>_DADOS_ORIGINAL.push(r));
-        showToast('✅ '+data.estabelecimentos.length+' estabelecimentos restaurados!','success');
+        apenasAtivos.forEach(r=>_DADOS_ORIGINAL.push(r));
+        showToast('✅ '+apenasAtivos.length+' estabelecimentos ativos restaurados!','success');
       }
+
+      // Restaura inativos na coleção SEPARADA — nunca afeta a base ativa
+      if(Array.isArray(data.inativos_data)&&data.inativos_data.length>0){
+        await saveInativosData(data.inativos_data);
+        showToast('✅ '+data.inativos_data.length+' inativos restaurados!','success');
+      }
+
       rebuildDADOS();
       refreshAllCategoryDropdowns();
       renderConfig();
@@ -2654,6 +2712,15 @@ async function boot() {
       if(d.bairros)    _fbCache.bairros=d.bairros;
     }
   } catch(e){console.warn('Firestore state:',e);showToast('⚠️ Sem conexão com a nuvem.','error');}
+
+  // Carrega dados dos estabelecimentos inativos (coleção separada)
+  try {
+    const inativosSnap=await _INATIVOS_REF.get();
+    if(inativosSnap.exists){
+      const id=inativosSnap.data();
+      if(Array.isArray(id.estabelecimentos)) _fbCache.inativos_data=id.estabelecimentos;
+    }
+  } catch(e){console.warn('Erro ao carregar inativos_data:',e);}
 
   let raw=[];
   try {

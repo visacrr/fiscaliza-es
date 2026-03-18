@@ -760,7 +760,7 @@ input:checked + .slider::before { transform: translateX(18px); }
 
       <div class="dash-grid">
         <div class="dash-card">
-          <h3>📍 Estabelecimentos por Bairro</h3>
+          <h3>📍 Estabelecimentos por Localidade</h3>
           <div id="bairroChart"></div>
         </div>
         <div class="dash-card">
@@ -788,7 +788,7 @@ input:checked + .slider::before { transform: translateX(18px); }
 
       <div class="filters-row">
         <select class="filter-select" id="filterBairro" onchange="setFilter('bairro', this.value)">
-          <option value="">Todos os bairros</option>
+          <option value="">Todas as localidades</option>
         </select>
         <select class="filter-select" id="filterCategoria" onchange="onFilterCategoria()">
           <option value="">Todas as categorias</option>
@@ -822,7 +822,7 @@ input:checked + .slider::before { transform: translateX(18px); }
                 <th>Nome Fantasia</th>
                 <th>Razão Social</th>
                 <th>Endereço</th>
-                <th>Bairro</th>
+                <th>Localidade</th>
                 <th>Categoria</th>
                 <th>Risco</th>
                 <th>Situação</th>
@@ -872,7 +872,7 @@ input:checked + .slider::before { transform: translateX(18px); }
               <thead>
                 <tr>
                   <th>Estabelecimento</th>
-                  <th>Bairro</th>
+                  <th>Localidade</th>
                   <th>Data</th>
                   <th>Equipe</th>
                   <th>Status</th>
@@ -939,7 +939,7 @@ input:checked + .slider::before { transform: translateX(18px); }
           </div>
           <div class="filters-row" style="margin-top:10px;margin-bottom:14px">
             <select class="filter-select" id="fiscEstabFilterBairro" onchange="fiscEstabFilters.bairro=this.value;fiscEstabPage=1;renderFiscEstabs()">
-              <option value="">Todos os bairros</option>
+              <option value="">Todas as localidades</option>
             </select>
             <select class="filter-select" id="fiscEstabFilterCategoria" onchange="fiscEstabFilters.categoria=this.value;fiscEstabPage=1;renderFiscEstabs()">
               <option value="">Todas as categorias</option>
@@ -970,7 +970,7 @@ input:checked + .slider::before { transform: translateX(18px); }
                 <th>Nome Fantasia</th>
                 <th>Razão Social</th>
                 <th>Endereço</th>
-                <th>Bairro</th>
+                <th>Localidade</th>
                 <th>Categoria</th>
                 <th>Risco</th>
                 <th>Status Vistoria</th>
@@ -1008,7 +1008,7 @@ input:checked + .slider::before { transform: translateX(18px); }
                 <th>Nome Fantasia</th>
                 <th>Razão Social</th>
                 <th>Endereço</th>
-                <th>Bairro</th>
+                <th>Localidade</th>
                 <th>Categoria</th>
                 <th>Risco</th>
                 <th>Situação</th>
@@ -1051,12 +1051,12 @@ input:checked + .slider::before { transform: translateX(18px); }
           </div>
         </div>
 
-        <!-- Bairros / Distritos -->
+        <!-- Localidades -->
         <div class="config-card">
-          <h3>📍 Bairros e Distritos</h3>
-          <p>Gerencie os bairros e distritos disponíveis para seleção nos cadastros e filtros</p>
+          <h3>📍 Localidades</h3>
+          <p>Gerencie as localidades disponíveis para seleção nos cadastros e filtros</p>
           <div class="input-group" style="margin-bottom:16px">
-            <input class="form-input" id="newBairroName" placeholder="Nome do bairro ou distrito...">
+            <input class="form-input" id="newBairroName" placeholder="Nome da localidade...">
             <button class="btn btn-primary" onclick="addBairro()">+ Adicionar</button>
           </div>
           <div class="bairro-tags" id="bairroTagList"></div>
@@ -1263,7 +1263,7 @@ input:checked + .slider::before { transform: translateX(18px); }
             <input class="form-input" id="estEndereco" placeholder="Ex: RUA DAS FLORES Nº 12">
           </div>
           <div class="form-group">
-            <label>Bairro *</label>
+            <label>Localidade *</label>
             <select class="form-select" id="estBairro">
               <option value="">Selecionar...</option>
             </select>
@@ -1355,20 +1355,20 @@ input:checked + .slider::before { transform: translateX(18px); }
   </div>
 </div>
 
-<!-- ─── MODAL CONFIRMAR EXCLUSÃO DE BAIRRO ──────────── -->
+<!-- ─── MODAL CONFIRMAR EXCLUSÃO DE LOCALIDADE ──────────── -->
 <div class="overlay" id="modalConfirmDelBairro">
   <div class="modal" style="max-width:420px">
     <div class="modal-header" style="background:var(--warning-bg)">
-      <h2 style="color:#7a4e00">🗺️ Excluir Bairro</h2>
+      <h2 style="color:#7a4e00">🗺️ Excluir Localidade</h2>
       <button class="modal-close" onclick="closeModal('modalConfirmDelBairro')">✕</button>
     </div>
     <div class="modal-body">
-      <p style="font-size:15px;margin-bottom:6px">Tem certeza que deseja excluir o bairro:</p>
+      <p style="font-size:15px;margin-bottom:6px">Tem certeza que deseja excluir a localidade:</p>
       <p style="font-weight:700;font-size:16px;color:var(--text);margin-bottom:16px" id="delBairroLabel">—</p>
-      <p style="font-size:13px;color:var(--text-muted);margin-bottom:22px">Após a exclusão, o bairro não estará mais disponível para seleção. Os cadastros existentes não serão alterados.</p>
+      <p style="font-size:13px;color:var(--text-muted);margin-bottom:22px">Após a exclusão, a localidade não estará mais disponível para seleção. Os cadastros existentes não serão alterados.</p>
       <div style="display:flex;gap:10px;justify-content:flex-end">
         <button class="btn btn-ghost" onclick="closeModal('modalConfirmDelBairro')">Cancelar</button>
-        <button class="btn btn-danger" onclick="confirmRemoveBairro()">🗑️ Excluir bairro</button>
+        <button class="btn btn-danger" onclick="confirmRemoveBairro()">🗑️ Excluir localidade</button>
       </div>
     </div>
   </div>
@@ -1460,6 +1460,7 @@ const _fbApp     = firebase.initializeApp(firebaseConfig);
 const _db        = firebase.firestore(_fbApp);
 const _STATE_REF    = _db.collection('visa_state').doc('app');
 const _BASE_REF     = _db.collection('visa_state').doc('base_data');
+const _INATIVOS_REF = _db.collection('visa_state').doc('inativos_data');
 const _USERS_REF    = _db.collection('visa_usuarios');
 const _fbAuth       = firebase.auth(_fbApp);
 
@@ -1482,7 +1483,8 @@ const _fbCache = {
   deleted: [],
   disabled: [],
   edited: {},
-  bairros: ['ESTRADA DE AUTAZES', 'COMUNIDADE BOA VISTA','ESTRADA DO MANAQUIRI','JACAMIM','P  A PANELAO','PACATUBA','LAGO CASTANHO','ORGAOS PUBLICOS','UBS E OUTRAS UNIDADES DE SAUDE','RAMAL TIMBO','COMUNIDADE DO TILHEIRO','HOTEIS E POUSADAS','LAGO TILHEIRO','PURUPURU','PURUPURU RIO','ESCOLAS','SAMAUMA','LAGO JANAUACA','SAO JOSE','RAMAL FLORESTA','MAMORI I','LAGO TAPAGEM','MERCADO CENTRAL','CENTRO','BAIRRO NOVO','VISTA ALEGRE','NOVO HORIZONTE','NOVA ESPERANCA','SEBASTIAO BORGES']
+  bairros: ['ESTRADA DE AUTAZES', 'COMUNIDADE BOA VISTA','ESTRADA DO MANAQUIRI','JACAMIM','P  A PANELAO','PACATUBA','LAGO CASTANHO','ORGAOS PUBLICOS','UBS E OUTRAS UNIDADES DE SAUDE','RAMAL TIMBO','COMUNIDADE DO TILHEIRO','HOTEIS E POUSADAS','LAGO TILHEIRO','PURUPURU','PURUPURU RIO','ESCOLAS','SAMAUMA','LAGO JANAUACA','SAO JOSE','RAMAL FLORESTA','MAMORI I','LAGO TAPAGEM','MERCADO CENTRAL','CENTRO','BAIRRO NOVO','VISTA ALEGRE','NOVO HORIZONTE','NOVA ESPERANCA','SEBASTIAO BORGES'],
+  inativos_data: [] // cache local dos dados completos dos estabelecimentos inativos
 };
 
 function _saveField(field, value) {
@@ -1515,6 +1517,15 @@ function getEditedMap()   { return _fbCache.edited; }
 function saveEditedMap(d) { _fbCache.edited = d; _saveField('edited', d); }
 function getBairros()     { return _fbCache.bairros && _fbCache.bairros.length ? _fbCache.bairros : ['Centro']; }
 function saveBairros(d)   { _fbCache.bairros = d; _saveField('bairros', d); }
+
+// ─── Dados completos dos inativos (doc separado) ────────
+function getInativosData()  { return _fbCache.inativos_data || []; }
+async function saveInativosData(lista) {
+  _fbCache.inativos_data = lista;
+  try {
+    await _INATIVOS_REF.set({ estabelecimentos: lista, updatedAt: new Date().toISOString() });
+  } catch(e) { console.error('Firestore write [inativos_data]:', e); }
+}
 
 function insKey(id) { return String(id); }
 
@@ -2211,11 +2222,16 @@ let _pendingDeactivateId = null;
 function toggleEstab(id) {
   const disabled = isDisabled(id);
   if (disabled) {
-    // Reativação: sem confirmação, imediata
+    // Reativação: remove da lista de inativos no Firestore e do disabled
     const list = getDisabledIds();
     const idx  = list.map(String).indexOf(String(id));
     if (idx >= 0) list.splice(idx, 1);
     saveDisabledIds(list);
+
+    // Remove da coleção de inativos
+    const listaInativos = getInativosData().filter(x => String(x.id) !== String(id));
+    saveInativosData(listaInativos);
+
     showToast('Estabelecimento ativado! ✅','success');
     refreshAfterChange();
   } else {
@@ -2227,14 +2243,27 @@ function toggleEstab(id) {
   }
 }
 
-function confirmDeactivate() {
+async function confirmDeactivate() {
   if (_pendingDeactivateId === null) return;
+  const id = _pendingDeactivateId;
+
+  // Move o registro completo para a coleção de inativos no Firestore
+  const r = DADOS.find(d => d.id === id);
+  if (r) {
+    const lista = getInativosData();
+    if (!lista.some(x => String(x.id) === String(id))) {
+      lista.push({ ...r, desativadoEm: new Date().toISOString() });
+      await saveInativosData(lista);
+    }
+  }
+
+  // Mantém o ID na lista disabled (usada para filtros em memória)
   const list = getDisabledIds();
-  list.push(_pendingDeactivateId);
+  list.push(id);
   saveDisabledIds(list);
   closeModal('modalConfirmDel');
-  const r = DADOS.find(d => d.id === _pendingDeactivateId);
-  showToast((r ? r.nome_fantasia : 'Estabelecimento') + ' desativado.', 'success');
+  const rec = DADOS.find(d => d.id === id);
+  showToast((rec ? rec.nome_fantasia : 'Estabelecimento') + ' desativado.', 'success');
   _pendingDeactivateId = null;
   refreshAfterChange();
 }
@@ -2409,7 +2438,7 @@ function imprimirEstabelecimentos() {
     <div class="print-body">
       <div style="background:#f9f9f9;border:1px solid #eee;border-radius:8px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#555">
         <strong style="color:#333">Filtros:</strong>
-        Bairro: <strong>${bairroAtivo}</strong> | Categoria: <strong>${catAtiva}</strong> | Risco: <strong>${riscoAtivo}</strong> | Status: <strong>${statusAtivo}</strong>
+        Localidade: <strong>${bairroAtivo}</strong> | Categoria: <strong>${catAtiva}</strong> | Risco: <strong>${riscoAtivo}</strong> | Status: <strong>${statusAtivo}</strong>
       </div>
       <div class="print-section-title">📊 Resumo</div>
       <div class="print-summary">
@@ -2420,7 +2449,7 @@ function imprimirEstabelecimentos() {
       </div>
       <div class="print-section-title">🏪 Estabelecimentos</div>
       <table>
-        <thead><tr><th style="width:28px">#</th><th>Nome Fantasia</th><th>Razão Social</th><th>Endereço</th><th>Bairro</th><th>Categoria</th><th>Tipo Atividade</th><th>CNAE</th><th>Risco</th><th>Órgão Lic.</th><th>Licenciamento</th><th>Status</th><th>Últ. Vistoria</th><th>Equipe Fiscal</th></tr></thead>
+        <thead><tr><th style="width:28px">#</th><th>Nome Fantasia</th><th>Razão Social</th><th>Endereço</th><th>Localidade</th><th>Categoria</th><th>Tipo Atividade</th><th>CNAE</th><th>Risco</th><th>Órgão Lic.</th><th>Licenciamento</th><th>Status</th><th>Últ. Vistoria</th><th>Equipe Fiscal</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
       <div class="print-footer">
@@ -2496,7 +2525,7 @@ function imprimirFiscalizacoes() {
       </div>
       <div class="print-section-title">📋 Fiscalizações</div>
       <table>
-        <thead><tr><th style="width:32px">#</th><th>Estabelecimento</th><th>Bairro</th><th>Data</th><th>Equipe</th><th>Status</th><th>Observação</th></tr></thead>
+        <thead><tr><th style="width:32px">#</th><th>Estabelecimento</th><th>Localidade</th><th>Data</th><th>Equipe</th><th>Status</th><th>Observação</th></tr></thead>
         <tbody>${tableRows}</tbody>
       </table>
       <div class="print-footer">
@@ -2550,14 +2579,14 @@ function refreshAllBairroDropdowns() {
   const fb = document.getElementById('filterBairro');
   if (fb) {
     const cur = fb.value;
-    fb.innerHTML = '<option value="">Todos os bairros</option>' + opts;
+    fb.innerHTML = '<option value="">Todas as localidades</option>' + opts;
     if (cur) fb.value = cur;
   }
   // Filtro na página de fiscalização
   const ff = document.getElementById('fiscEstabFilterBairro');
   if (ff) {
     const cur = ff.value;
-    ff.innerHTML = '<option value="">Todos os bairros</option>' + opts;
+    ff.innerHTML = '<option value="">Todas as localidades</option>' + opts;
     if (cur) ff.value = cur;
   }
   // Modal estab
@@ -2574,7 +2603,7 @@ function renderBairroTags() {
   if (!list) return;
   const bairros = getBairros();
   if (!bairros.length) {
-    list.innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Nenhum bairro cadastrado.</span>';
+    list.innerHTML = '<span style="font-size:13px;color:var(--text-muted)">Nenhuma localidade cadastrada.</span>';
     return;
   }
   list.innerHTML = bairros.map((b, i) => `
@@ -2587,17 +2616,17 @@ function renderBairroTags() {
 function addBairro() {
   const input = document.getElementById('newBairroName');
   const name  = input?.value.trim().toUpperCase();
-  if (!name) { showToast('Informe o nome do bairro!','error'); return; }
+  if (!name) { showToast('Informe o nome da localidade!','error'); return; }
   const bairros = getBairros();
   if (bairros.some(b => b.toUpperCase() === name)) {
-    showToast('Bairro já cadastrado!','error'); return;
+    showToast('Localidade já cadastrada!','error'); return;
   }
   bairros.push(name);
   saveBairros(bairros);
   if (input) input.value = '';
   renderBairroTags();
   refreshAllBairroDropdowns();
-  showToast('Bairro adicionado! ✅','success');
+  showToast('Localidade adicionada! ✅','success');
 }
 
 let _pendingDelBairroIdx = null;
@@ -2606,7 +2635,7 @@ function removeBairro(i) {
   const bairros  = getBairros();
   const nomeBairro = bairros[i];
 
-  // Verifica se algum estabelecimento usa este bairro
+  // Verifica se algum estabelecimento usa esta localidade
   const vinculados = DADOS.filter(d => d.bairro === nomeBairro).length;
   if (vinculados > 0) {
     showToast(
@@ -2631,7 +2660,7 @@ function confirmRemoveBairro() {
   renderBairroTags();
   refreshAllBairroDropdowns();
   closeModal('modalConfirmDelBairro');
-  showToast('Bairro removido.', 'success');
+  showToast('Localidade removida.', 'success');
   _pendingDelBairroIdx = null;
 }
 
@@ -2820,8 +2849,14 @@ function doImportInativos(e) {
 // BACKUP COMPLETO (inclui dados base)
 // ═══════════════════════════════════════════════════════
 function backupData() {
+  const disabledSet = new Set(getDisabledIds().map(String));
+  // Estabelecimentos base (apenas ativos — não contaminados por inativos)
+  const baseAtivos = _DADOS_ORIGINAL.filter(r => !disabledSet.has(String(r.id)));
+  // Inativos com dados completos (da coleção separada)
+  const inativos   = getInativosData();
+
   const data = {
-    version: 2,
+    version: 3,
     exportedAt: new Date().toISOString(),
     // Dados operacionais (visa_state/app)
     inspections: getInspections(),
@@ -2831,8 +2866,10 @@ function backupData() {
     deleted:     getDeletedIds(),
     disabled:    getDisabledIds(),
     edited:      getEditedMap(),
-    // Dados base (visa_state/base_data) — mesma coleção, doc diferente
-    estabelecimentos: _DADOS_ORIGINAL.slice()
+    // Dados base APENAS dos ativos (visa_state/base_data)
+    estabelecimentos: baseAtivos,
+    // Dados dos inativos em seção separada (visa_state/inativos_data)
+    inativos_data: inativos
   };
   downloadJSON(data, 'backup_completo_visa_careiro_' + new Date().toISOString().slice(0,10) + '.json');
   showToast('Backup completo exportado! ✅','success');
@@ -2854,24 +2891,33 @@ function doImport(e) {
       if (data.disabled)    saveDisabledIds(data.disabled);
       if (data.edited)      saveEditedMap(data.edited);
 
-      // Restaura dados base se presentes no backup
+      // Restaura dados base dos ATIVOS — nunca mistura com inativos
       if (Array.isArray(data.estabelecimentos) && data.estabelecimentos.length > 0) {
+        const disabledSet = new Set((data.disabled || []).map(String));
+        // Garante que apenas ativos vão para base_data
+        const apenasAtivos = data.estabelecimentos.filter(r => !disabledSet.has(String(r.id)));
         await _BASE_REF.set({
-          estabelecimentos: data.estabelecimentos,
+          estabelecimentos: apenasAtivos,
           importedAt: new Date().toISOString(),
-          total: data.estabelecimentos.length
+          total: apenasAtivos.length
         });
         _DADOS_ORIGINAL.length = 0;
-        data.estabelecimentos.forEach(r => _DADOS_ORIGINAL.push(r));
-        showToast('✅ '+data.estabelecimentos.length+' estabelecimentos base restaurados!','success');
+        apenasAtivos.forEach(r => _DADOS_ORIGINAL.push(r));
+        showToast('✅ ' + apenasAtivos.length + ' estabelecimentos ativos restaurados!', 'success');
+      }
+
+      // Restaura inativos na coleção SEPARADA — nunca afeta a base ativa
+      if (Array.isArray(data.inativos_data) && data.inativos_data.length > 0) {
+        await saveInativosData(data.inativos_data);
+        showToast('✅ ' + data.inativos_data.length + ' estabelecimentos inativos restaurados!', 'success');
       }
 
       rebuildDADOS();
       refreshAllCategoryDropdowns();
       renderConfig();
       refreshAfterChange();
-      showToast('Backup restaurado com sucesso! ✅','success');
-    } catch(err) { showToast('Arquivo inválido: '+err.message,'error'); }
+      showToast('Backup restaurado com sucesso! ✅', 'success');
+    } catch(err) { showToast('Arquivo inválido: ' + err.message, 'error'); }
   });
 }
 
@@ -2998,7 +3044,7 @@ function saveEstab() {
   const nome   = document.getElementById('estNome').value.trim();
   const bairro = document.getElementById('estBairro').value;
   if (!nome)   { showToast('Informe o Nome Fantasia!','error'); return; }
-  if (!bairro) { showToast('Selecione o Bairro!','error'); return; }
+  if (!bairro) { showToast('Selecione a Localidade!','error'); return; }
   const payload = {
     nome_fantasia:        nome,
     razao_social:         document.getElementById('estRazao').value.trim(),
@@ -3312,6 +3358,15 @@ async function boot() {
     console.warn('Firestore state indisponível:', e);
     showToast('⚠️ Sem conexão com a nuvem.','error');
   }
+
+  // Carrega dados dos estabelecimentos inativos (coleção separada)
+  try {
+    const inativosSnap = await _INATIVOS_REF.get();
+    if (inativosSnap.exists) {
+      const id = inativosSnap.data();
+      if (Array.isArray(id.estabelecimentos)) _fbCache.inativos_data = id.estabelecimentos;
+    }
+  } catch(e) { console.warn('Erro ao carregar inativos_data:', e); }
 
   let raw = [];
   try {
