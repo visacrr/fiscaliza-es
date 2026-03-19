@@ -7,11 +7,15 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f48aab">
+<img src="/imag01.jpeg" alt="Imagem">
 <title>VISA Careiro</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<!-- ── Firebase SDK ──────────────────────────────────────────────────── -->
 <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+<!-- ── Módulo central de configuração Firebase (credenciais únicas) ──── -->
+<script src="firebase-config.js"></script>
 <style>
 /* ═══════════════════════════════════════════════════════
    TOKENS
@@ -1291,23 +1295,10 @@ let _editFiscId         = null;
 let _editFiscIdx        = null;
 
 // ═══════════════════════════════════════════════════════
-// FIREBASE
+// FIREBASE — via firebase-config.js (módulo externo)
+// _fbApp · _db · _fbAuth · _STATE_REF · _BASE_REF
+// _INATIVOS_REF · _USERS_REF  já estão disponíveis globalmente.
 // ═══════════════════════════════════════════════════════
-const firebaseConfig = {
-  apiKey: "AIzaSyDR7J5Fzqkpe6s9GIZW7ibDQgkguHTt_2U",
-  authDomain: "visa-f4c86.firebaseapp.com",
-  projectId: "visa-f4c86",
-  storageBucket: "visa-f4c86.firebasestorage.app",
-  messagingSenderId: "794096930643",
-  appId: "1:794096930643:web:c3ae4d70fcd34c44d49ba6"
-};
-const _fbApp   = firebase.initializeApp(firebaseConfig);
-const _db      = firebase.firestore(_fbApp);
-const _STATE_REF = _db.collection('visa_state').doc('app');
-const _BASE_REF  = _db.collection('visa_state').doc('base_data');
-const _INATIVOS_REF = _db.collection('visa_state').doc('inativos_data');
-const _USERS_REF = _db.collection('visa_usuarios');
-const _fbAuth    = firebase.auth(_fbApp);
 
 let _currentUser = null;
 (function(){ try{ const s=sessionStorage.getItem('visa_session'); if(s)_currentUser=JSON.parse(s); }catch(e){} })();
