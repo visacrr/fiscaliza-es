@@ -3,7 +3,6 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=1280">
-<img src="/imag01.jpeg" alt="Imagem">
 <title>VISA Careiro — Cadastro Sanitário</title>
 
 <!-- ── Ícone personalizado: aba do navegador, atalho e tela inicial ─────── -->
@@ -26,8 +25,10 @@
       background_color: "#f5e8ef",
       theme_color: "#f48aab",
       icons: [
-        { src: "imag01.jpeg", sizes: "192x192", type: "image/jpeg", purpose: "any maskable" },
-        { src: "imag01.jpeg", sizes: "512x512", type: "image/jpeg", purpose: "any maskable" }
+        { src: "imag01.jpeg", sizes: "192x192", type: "image/jpeg", purpose: "any" },
+        { src: "imag01.jpeg", sizes: "512x512", type: "image/jpeg", purpose: "any" },
+        { src: "imag01.jpeg", sizes: "192x192", type: "image/jpeg", purpose: "maskable" },
+        { src: "imag01.jpeg", sizes: "512x512", type: "image/jpeg", purpose: "maskable" }
       ]
     };
     const blob = new Blob([JSON.stringify(m)], { type: 'application/manifest+json' });
@@ -694,7 +695,7 @@ input:checked + .slider::before { transform: translateX(18px); }
 
 <!-- Loading Overlay -->
 <div id="loadingOverlay" style="display:none;position:fixed;inset:0;background:rgba(245,232,239,.96);z-index:9000;flex-direction:column;align-items:center;justify-content:center;gap:16px">
-  <div style="font-size:44px">🏥</div>
+  <div style="width:72px;height:72px;border-radius:22px;overflow:hidden;box-shadow:0 6px 24px rgba(244,138,171,0.35)"><img src="imag01.jpeg" alt="VISA" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='🏥';this.parentElement.style.display='flex';this.parentElement.style.alignItems='center';this.parentElement.style.justifyContent='center';this.parentElement.style.fontSize='44px'"></div>
   <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700">VISA Careiro</div>
   <div style="font-size:13px;color:var(--text-muted)">Carregando dados da nuvem…</div>
   <div style="width:200px;height:6px;background:rgba(249,184,200,0.4);border-radius:50px;overflow:hidden;margin-top:4px">

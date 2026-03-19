@@ -7,7 +7,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f48aab">
-<img src="/imag01.jpeg" alt="Imagem">
 <title>VISA Careiro</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <!-- ── Firebase SDK ──────────────────────────────────────────────────── -->
@@ -662,7 +661,9 @@ input:checked + .slider::before { transform:translateX(18px); }
 
 <!-- ═══════ LOADING ══════════════════════════════════ -->
 <div id="loadingOverlay">
-  <div class="li">🏥</div>
+  <div class="li" style="width:72px;height:72px;border-radius:20px;overflow:hidden;box-shadow:0 6px 24px rgba(244,138,171,0.35);margin-bottom:4px">
+    <img src="imag01.jpeg" alt="VISA" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.textContent='🏥'">
+  </div>
   <div class="lt">VISA Careiro</div>
   <div class="ls">Carregando dados da nuvem…</div>
   <div class="load-bar"><div class="load-bar-fill"></div></div>
