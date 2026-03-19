@@ -8,6 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f48aab">
 <title>VISA Careiro</title>
+<!-- ── PWA Configuration ──────────────────────────────────────────────────── -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="imag01.jpeg">
+<link rel="icon" type="image/jpeg" href="imag01.jpeg">
+<!-- ── Fonts ──────────────────────────────────────────────────────────────── -->
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <!-- ── Firebase SDK ──────────────────────────────────────────────────── -->
 <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
@@ -15,6 +20,16 @@
 <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
 <!-- ── Módulo central de configuração Firebase (credenciais únicas) ──── -->
 <script src="firebase-config.js"></script>
+<!-- ── Service Worker Registration ──────────────────────────────────────── -->
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js')
+      .then(reg => console.log('✅ Service Worker registrado:', reg.scope))
+      .catch(err => console.warn('⚠️ Erro ao registrar Service Worker:', err));
+  });
+}
+</script>
 <style>
 /* ═══════════════════════════════════════════════════════
    TOKENS
@@ -682,7 +697,6 @@ input:checked + .slider::before { transform:translateX(18px); }
       </div>
     </div>
     <div class="tb-right">
-      <button class="icon-btn" id="tbAddBtn" onclick="openAdd()" title="Novo Estabelecimento" style="display:none">＋</button>
       <button class="icon-btn" onclick="doLogout()" title="Sair">🚪</button>
     </div>
   </div>
@@ -854,90 +868,6 @@ input:checked + .slider::before { transform:translateX(18px); }
       <div class="pagination-m" id="inativosPagination"></div>
     </div>
 
-    <!-- ═══ CONFIGURAÇÕES ═════════════════ -->
-    <div class="page-m" id="page-configuracoes">
-      <div class="config-section">
-        <div class="config-section-head">
-          <div>
-            <h3>👥 Equipes de Fiscalização</h3>
-            <p>Gerencie as equipes da Vigilância Sanitária</p>
-          </div>
-        </div>
-        <div class="config-body">
-          <div class="form-group-m" style="margin-bottom:10px">
-            <input class="form-input-m" id="newAgentName" placeholder="Nome da equipe…">
-          </div>
-          <div class="form-group-m" style="margin-bottom:10px">
-            <input class="form-input-m" id="newAgentRole" placeholder="Responsável/Tipo…">
-          </div>
-          <button class="btn-full-primary" onclick="addAgent()">+ Adicionar Equipe</button>
-          <div id="agentList" style="margin-top:14px"></div>
-        </div>
-      </div>
-
-      <div class="config-section">
-        <div class="config-section-head">
-          <div><h3>🔔 Notificações</h3><p>Alertas e avisos do sistema</p></div>
-        </div>
-        <div class="config-body">
-          <div class="switch-row-m">
-            <div class="sr-text">
-              <div class="sr-label">Alerta de Licença Vencendo</div>
-              <div class="sr-sub">Avisar 30 dias antes do vencimento</div>
-            </div>
-            <label class="switch"><input type="checkbox" id="togLicenca" checked onchange="saveConfig()"><span class="slider"></span></label>
-          </div>
-        </div>
-      </div>
-
-      <div class="config-section">
-        <div class="config-section-head">
-          <div><h3>📍 Localidades</h3><p>Gerencie as localidades disponíveis</p></div>
-        </div>
-        <div class="config-body">
-          <div style="display:flex;gap:8px;margin-bottom:10px">
-            <input class="form-input-m" id="newBairroName" placeholder="Nome da localidade…" style="flex:1">
-            <button class="btn-full-primary" onclick="addBairro()" style="flex:0 0 auto;padding:13px 16px">+</button>
-          </div>
-          <div id="bairroTagList" style="margin-top:6px"></div>
-        </div>
-      </div>
-
-      <div class="config-section">
-        <div class="config-section-head">
-          <div><h3>🔐 Segurança</h3><p>Alterar senha de acesso</p></div>
-        </div>
-        <div class="config-body">
-          <div class="form-group-m">
-            <label>Nova Senha</label>
-            <input class="form-input-m" type="password" id="newPasswordAdmin" placeholder="Mínimo 6 caracteres">
-          </div>
-          <div class="form-group-m">
-            <label>Confirmar Senha</label>
-            <input class="form-input-m" type="password" id="confirmPasswordAdmin" placeholder="Repita a nova senha">
-          </div>
-          <button class="btn-full-primary" onclick="changeUserPassword('newPasswordAdmin','confirmPasswordAdmin')">🔒 Alterar Senha</button>
-        </div>
-      </div>
-
-      <div class="config-section">
-        <div class="config-section-head">
-          <div><h3>💾 Dados do Sistema</h3><p>Backup e restauração</p></div>
-        </div>
-        <div class="config-body">
-          <div class="config-stat-bar" id="configStats"></div>
-          <div style="display:flex;flex-direction:column;gap:8px">
-            <button class="btn-full-primary" onclick="backupData()">📤 Exportar Backup Completo</button>
-            <button class="btn-full-ghost" onclick="importBackup()">📥 Restaurar Backup</button>
-            <button class="btn-full-ghost" onclick="importInativos()">📂 Importar Inativos (JSON)</button>
-            <button style="width:100%;padding:13px;background:var(--danger-bg);color:var(--danger);border:1.5px solid #f9c0c7;border-radius:50px;font-size:15px;font-weight:600;font-family:inherit;cursor:pointer" onclick="clearAllFiscalizacoes()">🗑️ Apagar Todas as Fiscalizações</button>
-          </div>
-          <div id="importInativosResult" style="display:none;margin-top:12px;padding:12px 14px;border-radius:10px;font-size:13px"></div>
-          <input type="file" id="importFile" accept=".json" style="display:none" onchange="doImport(event)">
-          <input type="file" id="importInativosFile" accept=".json" style="display:none" onchange="doImportInativos(event)">
-        </div>
-      </div>
-    </div>
 
     <!-- ═══ MEU CADASTRO ═════════════════ -->
     <div class="page-m" id="page-meu_cadastro">
@@ -1486,7 +1416,6 @@ function applyTabBar() {
       { page:'estabelecimentos',icon:'🏪', label:'Estabs' },
       { page:'fiscalizacao',    icon:'🔍', label:'Fiscalizar' },
       { page:'inativos',        icon:'🚫', label:'Inativos' },
-      { page:'configuracoes',   icon:'⚙️', label:'Config' },
     ];
   }
   document.getElementById('tabBar').innerHTML = tabs.map(t=>`
@@ -1638,8 +1567,6 @@ function renderTable() {
         <div class="card-footer">
           <div class="card-actions">
             <button class="act-btn yellow" onclick="openDetail(${r.id})">👁️ Ver</button>
-            ${isAdmin?`<button class="act-btn blue" onclick="openEdit(${r.id})">✏️</button>`:''}
-            ${isAdmin?`<button class="act-btn ${disabled?'success':'danger'}" onclick="toggleEstab(${r.id})">${disabled?'✅ Ativar':'🚫'}</button>`:''}
           </div>
         </div>
       </div>`;
@@ -1800,8 +1727,6 @@ function renderInativos() {
         <div class="card-footer">
           <div class="card-actions">
             <button class="act-btn yellow"  onclick="openDetail(${r.id})">👁️ Ver</button>
-            <button class="act-btn success" onclick="toggleEstab(${r.id})">✅ Ativar</button>
-            <button class="act-btn blue"    onclick="openEdit(${r.id})">✏️</button>
           </div>
         </div>
       </div>`).join('');
@@ -2420,111 +2345,6 @@ function imprimirFiscalizacoes() {
 
 function executarImpressao() { window.print(); }
 
-// ═══════════════════════════════════════════════════════
-// BACKUP / IMPORT
-// ═══════════════════════════════════════════════════════
-function backupData() {
-  const disabledSet=new Set(getDisabledIds().map(String));
-  const baseAtivos=_DADOS_ORIGINAL.filter(r=>!disabledSet.has(String(r.id)));
-  const inativos=getInativosData();
-  const data={
-    version:3,
-    exportedAt:new Date().toISOString(),
-    inspections:getInspections(),
-    agents:getAgents(),
-    config:getConfig(),
-    custom:getCustom(),
-    deleted:getDeletedIds(),
-    disabled:getDisabledIds(),
-    edited:getEditedMap(),
-    // Apenas ativos (visa_state/base_data)
-    estabelecimentos:baseAtivos,
-    // Inativos em seção separada (visa_state/inativos_data)
-    inativos_data:inativos
-  };
-  downloadJSON(data,'backup_visa_'+new Date().toISOString().slice(0,10)+'.json');
-  showToast('Backup exportado! ✅','success');
-}
-function importBackup() { document.getElementById('importFile').click(); }
-function doImport(e) {
-  const file=e.target.files[0]; e.target.value='';
-  if (!file) return;
-  readJSON(file,async data=>{
-    try {
-      if(data.inspections) saveInspections(data.inspections);
-      if(data.agents)      saveAgents(data.agents);
-      if(data.config)      {_fbCache.config=data.config;_saveField('config',data.config);}
-      if(data.custom)      saveCustom(data.custom);
-      if(data.deleted)     saveDeletedIds(data.deleted);
-      if(data.disabled)    saveDisabledIds(data.disabled);
-      if(data.edited)      saveEditedMap(data.edited);
-
-      // Restaura base dos ATIVOS — nunca mistura com inativos
-      if(Array.isArray(data.estabelecimentos)&&data.estabelecimentos.length>0){
-        const disabledSet=new Set((data.disabled||[]).map(String));
-        const apenasAtivos=data.estabelecimentos.filter(r=>!disabledSet.has(String(r.id)));
-        await _BASE_REF.set({estabelecimentos:apenasAtivos,importedAt:new Date().toISOString(),total:apenasAtivos.length});
-        _DADOS_ORIGINAL.length=0;
-        apenasAtivos.forEach(r=>_DADOS_ORIGINAL.push(r));
-        showToast('✅ '+apenasAtivos.length+' estabelecimentos ativos restaurados!','success');
-      }
-
-      // Restaura inativos na coleção SEPARADA — nunca afeta a base ativa
-      if(Array.isArray(data.inativos_data)&&data.inativos_data.length>0){
-        await saveInativosData(data.inativos_data);
-        showToast('✅ '+data.inativos_data.length+' inativos restaurados!','success');
-      }
-
-      rebuildDADOS();
-      refreshAllCategoryDropdowns();
-      renderConfig();
-      refreshAfterChange();
-      showToast('Backup restaurado! ✅','success');
-    } catch(err){showToast('Arquivo inválido: '+err.message,'error');}
-  });
-}
-function importInativos() { document.getElementById('importInativosFile').click(); }
-function doImportInativos(e) {
-  const file=e.target.files[0]; e.target.value=''; if(!file)return;
-  readJSON(file,data=>{
-    try {
-      let lista=Array.isArray(data)?data:Array.isArray(data.estabelecimentos)?data.estabelecimentos:null;
-      if(!lista){showToast('Formato inválido!','error');return;}
-      lista=lista.filter(r=>r&&r.nome_fantasia&&r.nome_fantasia.trim());
-      if(!lista.length){showToast('Nenhum registro válido.','error');return;}
-      const custom=getCustom();const disabled=getDisabledIds();const disabledSet=new Set(disabled.map(String));
-      let adicionados=0,jaInativos=0,jaAtivos=0;
-      lista.forEach(item=>{
-        const nomeNorm=item.nome_fantasia.trim().toUpperCase();
-        const existente=DADOS.find(d=>(d.nome_fantasia||'').trim().toUpperCase()===nomeNorm);
-        if(existente){
-          if(disabledSet.has(String(existente.id))){jaInativos++;}
-          else{jaAtivos++;}
-        } else {
-          const novoId=Date.now()+Math.floor(Math.random()*100000);
-          const novo={id:novoId,nome_fantasia:item.nome_fantasia.trim(),razao_social:item.razao_social||'',endereco:item.endereco||'',bairro:item.bairro||'',categoria:item.categoria?item.categoria.trim().toUpperCase():'',tipo_atividade:item.tipo_atividade?item.tipo_atividade.trim().toUpperCase():'',cnae:item.cnae||'',classe_risco:item.classe_risco||'',ultimo_licenciamento:item.ultimo_licenciamento||'',orgao_licenciador:item.orgao_licenciador||''};
-          custom.push(novo);disabled.push(novoId);disabledSet.add(String(novoId));adicionados++;
-        }
-      });
-      saveCustom(custom);saveDisabledIds(disabled);rebuildDADOS();refreshAllCategoryDropdowns();refreshAfterChange();
-      showToast(`Inativos: ${adicionados} novo(s), ${jaAtivos} já ativo(s).`,'success');
-    } catch(err){showToast('Erro: '+err.message,'error');}
-  });
-}
-
-function clearAllFiscalizacoes() {
-  if (!confirm('Isso vai apagar TODAS as fiscalizações. Continuar?')) return;
-  saveInspections({});
-  updateTopBadges();
-  if (currentPage==='fiscalizacao') renderFiscalizacoes();
-  if (currentPage==='dashboard')    renderDashboard();
-  updateConfigStats();
-  showToast('Fiscalizações apagadas.','success');
-}
-
-function downloadJSON(obj,filename) { downloadBlob(new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),filename); }
-function downloadBlob(blob,filename) { const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=filename;document.body.appendChild(a);a.click();document.body.removeChild(a);setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
-function readJSON(file,cb) { const r=new FileReader();r.onload=ev=>{try{cb(JSON.parse(ev.target.result));}catch{showToast('Erro ao ler JSON.','error');}};r.readAsText(file); }
 
 // ═══════════════════════════════════════════════════════
 // AUTH
