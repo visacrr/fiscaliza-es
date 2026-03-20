@@ -20,6 +20,7 @@
   appId: "1:794096930643:web:c3ae4d70fcd34c44d49ba6"
 };
 
+
   // ── Inicializa o app evitando duplicidade ───────────────────────────────
   const _fbApp = firebase.apps.length
     ? firebase.apps[0]
